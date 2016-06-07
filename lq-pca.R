@@ -1,8 +1,18 @@
-
-lq=read.table("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/3a2cbc87-d2cd-4250-b99e-8d47ff7e0331/download/lq2.csv", 
+library(ckanr)
+ckanr_setup(url = 'https://datahub.io/', key = '3f3a56c4-4e29-4f18-851f-c607a1286f80')
+lq=read.table("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/b84778f4-2db4-4667-a329-9be97704e296/download/lq2.csv", 
               header = TRUE, sep = ",")
+for (i in 1:length(lq$COUNTYFP) ) 
+  if ( nchar(lq$COUNTYFP[i]) == 1 ) {
+    lq$COUNTYFP[i] <- paste("00",lq$COUNTYFP[i], sep = "")
+   } else if ( nchar(lq$COUNTYFP[i]) == 2) {
+    lq$COUNTYFP[i] <- paste("0",lq$COUNTYFP[i], sep = "")
+  } else {
+     lq$COUNTYFP[i] <- lq$COUNTYFP[i]
+  }
+lq$COUNTYFP <- as.factor(lq$COUNTYFP)
 
-
+str(lq)
 
 #transform select variables and reassemble into a new dataset
 lq <- lq[,4:ncol(lq)]
