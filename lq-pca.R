@@ -1,5 +1,6 @@
 library(rgdal)
 library(plyr)
+library(ckanr)
 
 ckanr_setup(url = 'https://datahub.io/', key = '3f3a56c4-4e29-4f18-851f-c607a1286f80')
 lq=read.table("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/b84778f4-2db4-4667-a329-9be97704e296/download/lq2.csv", 
