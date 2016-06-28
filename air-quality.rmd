@@ -14,6 +14,7 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8,
 library(lubridate)
 library(plotrix)
 library(dplyr)
+library(animation)
 
 yrmonth_order <- 
 c("2010-3","2010-4","2010-5","2010-6","2010-7","2010-8","2010-9","2010-10","2010-11","2010-12","2011-1","2011-2",
