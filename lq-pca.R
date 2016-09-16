@@ -1,9 +1,7 @@
 library(rgdal)
 library(plyr)
-library(ckanr)
 
-ckanr_setup(url = 'https://datahub.io/', key = '3f3a56c4-4e29-4f18-851f-c607a1286f80')
-lq=read.table("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/b84778f4-2db4-4667-a329-9be97704e296/download/lq2.csv", 
+lq=read.table("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/954cab94-1170-495b-922a-aa964d8e089c/download/lq.csv", 
               header = TRUE, sep = ",")
 for (i in 1:length(lq$COUNTYFP) ) 
   if ( nchar(lq$COUNTYFP[i]) == 1 ) {
@@ -14,21 +12,16 @@ for (i in 1:length(lq$COUNTYFP) )
      lq$COUNTYFP[i] <- lq$COUNTYFP[i]
   }
 
-str(lq)
+tail(lq)
 
 lq$COUNTYFP <- as.factor(lq$COUNTYFP)
 
 counties <- readOGR("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/f2693c94-fd69-4baf-887b-f302a5188ead/download/counties.geojson",
                     "OGRGeoJSON")
-str(counties@data)
-counties@data <- counties@data[,1:10]
-#counties@data <- counties@data[,1:10]
 
+counties@data <- counties@data[,1:10]
 counties@data <- merge(x = counties@data, y = lq, by = "FIPS")
 str(counties@data)
-
-ckanr_setup(url = 'https://datahub.io/', key = '3f3a56c4-4e29-4f18-851f-c607a1286f80')
-
 
 
 #transform select variables and reassemble into a new dataset
@@ -44,7 +37,7 @@ str(lq)
 ##########################################################
 
 
-fact1=factanal(lq[,c(1:11,13,14)],factors=5,rotation="varimax")
+fact1=factanal(lq[,c(1:17,19)],factors=4,rotation="varimax")
 fact1
 
 #get loading plot for first two factors

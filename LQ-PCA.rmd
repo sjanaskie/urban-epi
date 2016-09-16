@@ -1,0 +1,275 @@
+---
+title: "LQ-PCA"
+author: "Ryan Thomas"
+date: "June 23, 2016"
+output: html_document
+---
+# About the data
+```{r setup }
+knitr::opts_chunk$set(echo = TRUE)
+library(plyr)
+library(rgdal)
+library(sp)
+library(dplyr)
+library(data.table)
+```
+
+```{r getData}
+counties <- readOGR("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/f2693c94-fd69-4baf-887b-f302a5188ead/download/counties.geojson",
+                    "OGRGeoJSON")
+counties@data$FIPS <- as.character(counties@data$FIPS)
+for (i in 1:nrow(counties@data) ) {
+  if ( nchar( counties@data$FIPS[i] ) == 4) {
+    counties@data$FIPS[i] <- paste("0",as.character(counties@data$FIPS[i]), sep = "")
+  } else {
+     counties@data$FIPS[i] <- counties@data$FIPS[i]
+  }
+}
+counties@data$FIPS <- as.factor(counties@data$FIPS)
+str(counties@data$FIPS)
+counties@data <- counties@data[,1:10]
+
+sectors <- data.frame(cbind(
+  c("11",	"21",	"22",	"23",	"31_33",	"42",	"48_49",	
+    "51",	"52",	"53",	"54",	"55",	"56",	"61", "62","71","72","81","92"),
+  c("AgriForest",	"Mining",	"Utilities",	"Construction",	
+    "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",	
+    "Finance",	"RealEstate",	"ProfScienceTech",	
+    "Management",	"AdminWasteManagement","Education","HealthCare","AccomodationFood","Other","PubAdmin")))
+names(sectors) <- c("sector", "description")
+
+qcewGetIndustryData <- function (year, qtr, industry) {
+  url <- "http://www.bls.gov/cew/data/api/YEAR/QTR/industry/INDUSTRY.csv"
+  url <- sub("YEAR", year, url, ignore.case=FALSE)
+  url <- sub("QTR", qtr, url, ignore.case=FALSE)
+  url <- sub("INDUSTRY", industry, url, ignore.case=FALSE)
+  read.csv(url, header = TRUE, sep = ",", quote="\"", dec=".", na.strings=" ", skip=0)
+}
+### Use this loop to go through the sectors loaded in the data frame 
+for (i in 1:length(sectors[,1])) {
+  if (i == 1) {
+    print(paste("getting data for ", sectors[i,2]))
+    dt1 <- qcewGetIndustryData("2015", "3", sectors[1,1])
+    dt1 <- aggregate(dt1$month2_emplvl, by=list(Category=dt1$area_fips), FUN=sum)
+    names(dt1) <- c("area_fips", as.character(sectors[1,2]))
+    
+  } else if (i == 2) {
+    print(paste("getting data for ", sectors[i,2]))
+    dt2 <- qcewGetIndustryData("2015", "3", sectors[i,1])    
+    dt2 <- aggregate(dt2$month2_emplvl, by=list(Category=dt2$area_fips), FUN=sum)
+    names(dt2) <- c("area_fips", as.character(sectors[i,2]))
+    data <- merge(dt1, dt2, all=TRUE)
+    
+  } else {
+    print(paste("getting data for ", sectors[i,2]))
+    dt3 <- qcewGetIndustryData("2015", "3", sectors[i,1]) 
+    dt3 <- aggregate(dt3$month2_emplvl, by=list(Category=dt3$area_fips), FUN=sum)
+    names(dt3) <- c("area_fips", as.character(sectors[i,2]))
+    data <- merge(data, dt3, all=TRUE)
+    head(data)
+      }
+  
+}
+```
+
+#### Assign row names and column names for reference through the transformations
+
+```{r rename}
+rownames(data) <- data$area_fips
+colnames(data) <- c("FIPS", "AgriForest",	"Mining",	"Utilities",	"Construction",	
+    "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",
+    "Finance",	"RealEstate",	"ProfScienceTech", "Management",	"AdminWasteManagement",
+    "Education","HealthCare", "AccomodationFood","Other","PubAdmin")
+glimpse(data)
+str(data)
+```
+
+```{r calculateLQ}
+#this can only be computed for complete cases
+data <- data[complete.cases(data),]
+
+## cut out the US000 row, which is total US per sector
+data <- data[data$FIPS != "US000",]
+
+### Convert the data frame to a matrix and take a look
+mat <- data.matrix( data[ ,2:length(data[1,]) ] )
+
+# Calculate the LQ
+share_tech_city <- mat / rowSums (mat)
+share_tech_city
+
+share_tech_total <- colSums (mat) / sum (mat)
+share_tech_total
+
+lq <- t(share_tech_city) / share_tech_total
+lq[is.na(lq)] <- 0 
+lq[which(lq==Inf)] <- 0 
+lq <- t(lq)
+
+
+# here we go, this is the location quotient for each spatial unit - economic unit pair
+colnames(lq) <- list("AgriForest",	"Mining",	"Utilities",	"Construction",	
+    "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",
+    "Finance",	"RealEstate",	"ProfScienceTech", "Management",	"AdminWasteManagement",
+    "Education","HealthCare", "AccomodationFood","Other","PubAdmin")
+head(lq)
+```
+
+
+Data were downloaded from the Bureau of Labor Statistics, and they contain the employment levels for each county at the 2-digit NAICS level. This same analysis could be replicated at various other levels of analysis by adapting the R script that lists the NAICS codes. More information on the BLS API and data availability can be found at the [BLS website](enter here!!! )
+
+
+## Factor Analysis with Verimax Rotation of LQ data
+Factor analysis provides insight to the underlying relationship between multiple variables in a data set of numeric data. For this post, we analyzed the location quotients of each county in the US to see what patterns would emerge in the co-occurence of sectors. In the output below, each factor represents a composite variable based on the loadings shown in the column. Using these loadings, the factors were applied to each county using matrix multiplication to determine a score for each factor shown. The resulting score was then attributed to that county as the factor score for that variable. This method essentially simplifies the economy into 5 composite sectors. Omitted columns represent insignificant loadings, and these were also removed from the matrix multiplication. 
+```{r factanal}
+##########################################################
+##  Perform Factor Analysis using Maximum Likelihood
+##  with Varimax Rotation
+##########################################################
+
+# These are already complete cases
+#lq <- lq[complete.cases(lq),]
+
+fact1=factanal(lq[,c(1:17,19)],factors=5,rotation="varimax")
+fact1
+
+#get loading plot for factors 1 by 2-5
+par(mfrow=c(3,3),mar = c(4,4,1,1))
+plot(fact1$loadings, pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings, labels=colnames(lq),xpd=TRUE)
+
+#get loading plot for factors 1 through 5
+plot(fact1$loadings[,c(1,3)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(1,3)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(1,4)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(1,4)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(1,5)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(1,5)], labels=colnames(lq),xpd=TRUE)
+# 4
+
+plot(fact1$loadings[,c(2,3)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(2,3)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(2,4)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(2,4)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(2,5)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(2,5)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(3,4)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(3,4)], labels=colnames(lq),xpd=TRUE)
+
+plot(fact1$loadings[,c(3,5)], pch=18, col='red')
+abline(h=0)
+abline(v=0)
+text(fact1$loadings[,c(3,5)], labels=colnames(lq),xpd=TRUE)
+#8
+
+#get reproduced correlation matrix
+repro1=fact1$loadings%*%t(fact1$loadings)
+#residual correlation matrix -- should be close to zero
+resid1=fact1$cor-repro1
+round(resid1,2)
+
+#get root-mean squared residuals
+len=length(resid1[upper.tri(resid1)])
+RMSR1=sqrt(sum(resid1[upper.tri(resid1)]^2)/len)
+RMSR1
+
+#get proportion of residuals greater than 0.05 in absolute value
+sum(rep(1,len)[abs(resid1[upper.tri(resid1)])>0.05])/len
+# smaller is better -- 0.2549 is ok but not great
+```
+
+## Factor Characterizations
+To make these factors understandable, we will go through each factor, look at the loadings and name them based on what they represent.
+####Factor 1: 
+The first factor has relatively high scores in Produducing and Natural Resources, and relatively low scores in Services. So counties with high scores in this factor would be 
+
+```{r createFactCols }
+fal <- matrix(fact1$loadings[c(1:18),],nrow=18, ncol=5, dimnames = list(c("AgriForest",	"Mining",	"Utilities",	"Construction",	
+    "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",	"Finance",	"RealEstate",	"ProfScienceTech",	
+    "Management",	"AdminWasteManagement","Education","HealthCare","AccomodationFood","PubAdmin"), 
+    c("Factor1", "Factor2",   "Factor3",   "Factor4",    "Factor5")))
+
+for (i in 1:nrow(lq)) {
+  
+   lq$fact1[i] <- sum(data.frame(
+     mapply(`*`,lq[ i, c(5,6,8:13,15,17,18)], fal[c(5,6,8:13,15,17,18),1],SIMPLIFY=FALSE))
+     )
+   ############
+   lq$fact2[i] <- sum(data.frame(
+     mapply(`*`,lq[ i, c(4:7,9:12,14,15)], fal[c(1:4,6:9,11,12),2],SIMPLIFY=FALSE))
+     )
+   lq$fact3[i] <- sum(data.frame(
+     mapply(`*`,lq[ i, c(4:9,14,16)], fal[c(1:6,11,13),3],SIMPLIFY=FALSE))
+     )
+   lq$fact4[i] <- sum(data.frame(
+     mapply(`*`,lq[ i, c(4,6,7,12,13)], fal[c(1,3,4,9,10),4],SIMPLIFY=FALSE))
+     )
+   lq$fact5[i] <- sum(data.frame(
+     mapply(`*`,lq[ i, c(4,5,7,14,15)], fal[c(1,2,4,11,12),5],SIMPLIFY=FALSE))
+     )
+}
+
+lqdf <- as.data.frame(lq)
+str(lq)
+
+
+lqdf$FIPS <- rownames(lqdf)
+str(lqdf)
+```
+
+
+```{r mergeCounties}
+setkey(counties@data,FIPS)
+setkey(lqdf ,FIPS)
+counties@data <- merge(x = counties@data, y = lq, all.x = TRUE)
+str(counties@data)
+```
+
+[leaflet link](https://rstudio.github.io/leaflet/showhide.html)
+```{r leaflet, warning=FALSE }
+library(rgdal)
+library(leaflet)
+library(shiny)
+
+pal <- colorQuantile("YlGn", NULL, n = 5)
+
+county_popup <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Factor 1 Score: </strong>", 
+                      round(counties$fact1),2)
+
+leaflet() %>%
+  setView(lng = -90, lat = 37, zoom = 3) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = counties, 
+              group = "factors",
+              fillColor = ~pal(fact1),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup)
+
+```
+
