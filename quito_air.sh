@@ -1,5 +1,3 @@
-
-
 ##############################################################
 ##  Save this file where you want to download the air data	##
 ## This script creates a new folder in that location 		##
@@ -32,12 +30,12 @@ for ANO in {2008..2015}
 done
 
 
-for file in *.txt ; do mv $file ${file//%20/_} ; done
+for file in *PM%202.5.txt ; do mv "$file" "${file//%202.5/25}" ; done
 
-We want to create a new file that has the following columns:
-[Year, Month, Day, Hour, Cotocollao, Carapungo, Belisario, Jipijapa, El Camal, Centro, Guamaní, Tumbaco, Los Chillos, El Condado, Turubamba, Chillogallo]
-To get this, we will do the following:
-for each file in /air_files and grab the year take the year of the filename
+#We want to create a new file that has the following columns:
+#[Year, Month, Day, Hour, Cotocollao, Carapungo, Belisario, Jipijapa, El Camal, Centro, Guamaní, Tumbaco, Los Chillos, El Condado, #Turubamba, Chillogallo]
+#To get this, we will do the following:
+#for each file in /air_files and grab the year take the year of the filename
 
 
 # this prints only the third column of data for each month of 2015 
