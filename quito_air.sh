@@ -30,3 +30,36 @@ for ANO in {2008..2015}
 		done
 	done
 done
+
+
+for file in *.txt ; do mv $file ${file//%20/_} ; done
+
+We want to create a new file that has the following columns:
+[Year, Month, Day, Hour, Cotocollao, Carapungo, Belisario, Jipijapa, El Camal, Centro, Guamaní, Tumbaco, Los Chillos, El Condado, Turubamba, Chillogallo]
+To get this, we will do the following:
+for each file in /air_files and grab the year take the year of the filename
+
+
+# this prints only the third column of data for each month of 2015 
+# key - the split must be done in the same brackets as the writing of the type.
+awk ' BEGIN { FS=";" } 
+    { if (NR==1) 
+        {  print "yyyy.mm.dd.hh\t" "Type\t" $3 "\t" $4 "\t" $5 "\t" $6"\t" $7"\t" $8"\t" $9"\t" $10"\t" $11"\t" $12"\t" $13"\t" $14"\t" $15"\t" $16 } 
+        else { if (FNR>1) split(FILENAME,a,"_");split(a[3],b,".");
+            print substr(FILENAME,0,4)"-"substr(FILENAME,6,3)"-"$1"-"$2"\t" b[1]"\t" $3"\t" $4"\t" $5"\t" $6"\t" $7"\t" $8"\t" $9"\t" $10"\t" $11"\t" $12"\t" $13"\t" $14"\t" $15"\t" $16 }
+    }' *.txt > air_quality.tsv 
+
+#take a look at the tail to make sure the type of reading came through
+head air_quality.tsv 
+tail air_quality.tsv
+
+
+
+
+
+
+
+
+    
+    
+    
