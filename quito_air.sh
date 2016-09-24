@@ -10,7 +10,7 @@
 
 
 # make new variable to use the current directory
-DIR=../air_files
+DIR=./air_files
 
 rm -rf $DIR # remove previous attempts
 mkdir $DIR # remake the directory
