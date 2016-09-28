@@ -46,7 +46,10 @@ aq[, 3:14] <- sapply(aq[, 3:14], as.numeric)
 #aq$hour <- as.factor(hour(aq$date))
 
 # prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
+<<<<<<< HEAD
 
+=======
+>>>>>>> 55d41a14b85e359fd8a1c6079aa1c898cc735d8a
 lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
 
 ## TIDY DATA
@@ -94,6 +97,7 @@ a %>%
 	facet_wrap(~station)
 ```
 
+<<<<<<< HEAD
 
 ```{r}
 plot.new()
@@ -124,6 +128,8 @@ PM 2.5 (Average concentration in 24 hours) (μg/m3)
 250
 
 Carbon Monoxide (Average concentration in 8 hours) (μg/m3)
+=======
+>>>>>>> 55d41a14b85e359fd8a1c6079aa1c898cc735d8a
 ```{r}
 # Then we should count daily exceedances for each sensor and the average. 
 # make category for each group of exceedances
