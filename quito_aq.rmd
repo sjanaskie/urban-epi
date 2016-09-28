@@ -19,17 +19,25 @@ library(tidyr)
 library(ggplot2)
 
 ## READ IN DATA
-aq <- read.table("~/code/urban-epi/air_files/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
+aq <- read.table("~/Documents/r/urban-epi-git/air_data/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
 
 ## COLUMN VARIABLES TO CORRECT CLASS
 # date to posix
 # abbreviated month name in spanish? need to set sys locale to understand
 Sys.setlocale(locale="es_ES.utf8")
-aq$date <- as.POSIXct(parse_date_time(aq$yyyy.mm.dd.hh,"%Y-%b-%d-%H")) #432 failed to parse
+aq$date <- as.POSIXct(strptime(aq$yyyy.mm.dd.hh,"%Y-%m-%d %H:%M")) #432 failed to parse
 # chemical type to factor
 aq$Type <- as.factor(aq$Type)
-# make conc values numeric from character. 
-aq[, 3:14] <- sapply(aq[, 3:14], as.numeric) #creates some NAs from the NDs, #last three stations all NAs?
+
+
+# make concatenated values numeric from character.
+# Why not just assign these to NA directly with 
+
+aq[, 3:14] <- sapply(aq[, 3:14], as.numeric)
+
+#creates some NAs from the NDs, 
+#last three stations all NAs?
+
 # make new factors out of date data
 #aq$yrmonth <- as.factor(paste(year(aq$date),month(aq$date),sep="-"))
 #aq$year <- as.factor(year(aq$date))
@@ -37,7 +45,8 @@ aq[, 3:14] <- sapply(aq[, 3:14], as.numeric) #creates some NAs from the NDs, #la
 #aq$hour <- as.factor(hour(aq$date))
 
 # prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
-#lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
+
+lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
 
 ## TIDY DATA
 # new df - make station columns turn into rows, drop three stations that are all NAs
@@ -52,7 +61,8 @@ a$station <- as.factor(a$station)
 # number of missing obs (31%)
 sum(is.na(a$conc))/length(a$conc)
 # number of obs for each Type
-lapply(split(aq[, 3:12], aq$Type), function(x) sum(!is.na(x)))
+readings <- lapply(split(aq[, 3:12], aq$Type), function(x) sum(!is.na(x)))
+readings
 # how many obs per station, showing 0 non NAs for El Condado?
 apply(aq[, 3:12], 2, function(x) sum(!is.na(x)))
 
@@ -89,6 +99,23 @@ a %>%
 	facet_wrap(~station)
 ```
 
+
+```{r}
+plot.new()
+par(mar=c(4,3,1,1),mfrow=c(4,3))
+mn<-sum(as.matrix(aq[aq$Type=="PM25",][,3:11]),na.rm = T)/readings$PM25
+for (i in 3:12) {
+  hist(log(aq[aq$Type=="PM25",i]),
+       breaks=20,
+       main=names(aq)[i],
+       ylab="freq",
+       xlab="log(PM 2.5)",
+       abline(v=log(mn),col="red")
+       )
+}
+
+
+```
 
 
 
@@ -131,203 +158,4 @@ a[!is.na(a$conc),] %>%
 	summarize(Alert_ex = .>2E2, Alarm_ex = .>1E3, Emergy_ex = .>1.8E3)
 
 ```
-
-
-```{r}
-aq_by_hour <- aggregate(cbind(PM2.5.level, Concentration) ~ hour, 
-                         data = aq, mean)
-aq_by_month <- aggregate(cbind(PM2.5.level, Concentration) ~ yrmonth, 
-                         data = aq, mean)
-
-aq_2_2016 <- aggregate(cbind(PM2.5.level, Concentration) ~ hour, 
-                       data = aq[aq$date > "2016-02-01" & aq$date < "2016-03-01" ,], mean)
-
-year <- levels(aq$year)
-month <- levels(aq$month)
-
-aq_monthly_by_hour <- aggregate(cbind(PM2.5.level, Concentration) ~ year+month+hour, 
-                       data = aq, mean)
-```
-
-### PM2.5 level in February 2016 was the lowest since January 2011.
-PM2.5 levels and concentrations shift throughout the course of the day. This can be seen in the figures below, where the highest mean PM2.5 levels and concentrations occur between 11PM and Midnight, following the evening rush hour. The lowest levels and concentrations occur between 2PM an 4PM. The mean PM2.5 level in January 2016 was the lowest since February 2011. In the middle graph below, the hourly average for Feburary 2016 can be seen in green, clearly below the mean over the period 2011-2016. 
-```{r}
-par(mfrow = c(1,3), mar = c(4,3,1,1))
-polar.plot(aq_by_hour$PM2.5.level,
-           start = 90, # move 00 to top
-           clockwise = T,
-           rp.type = "polygon", # connect 23 to 00
-           line.col = "blue", 
-           show.grid.labels = 1, # (1-4) 1 = move labels to vertical axis on bottom
-           labels = aq_by_hour$hour, # outside labels
-           label.pos = seq(0,360, by = 15), 
-           radial.lim = c(0, 250), # defaults to min and max
-           # main = paste("Mean PM 2.5 and Concentration", "at each Hour in Beijing", sep = "\n"))
-           main = "Mean PM2.5 and Concentration at each Hour")
-polar.plot(aq_by_hour$Concentration, 
-           start = 90, 
-           clockwise = T, 
-           rp.type = "polygon",
-           line.col = "red", 
-           show.grid.labels = 1,
-           labels = aq_by_hour$hour,
-           label.pos = seq(0,360, by = 15),
-           radial.lim = c(0, max(aq_by_hour$Concentration)),
-           add = TRUE)
-legend("bottomright", lty = 1, col = c("blue", "red"), 
-       legend = c("PM2.5", "Concentration"),
-       box.lwd = 0)
-###########################################################################
-polar.plot(aq_by_hour$PM2.5.level,
-           start = 90, # move 00 to top
-           clockwise = T,
-           rp.type = "polygon", # connect 23 to 00
-           line.col = "blue", 
-           show.grid.labels = 1, # (1-4) 1 = move labels to vertical axis on bottom
-           labels = aq_by_hour$hour, # outside labels
-           label.pos = seq(0,360, by = 15), 
-           radial.lim = c(0, 250),
-           # main = paste("Mean PM 2.5 and Concentration", "at each Hour in Beijing", sep = "\n"))
-           main = "Monthly Mean PM2.5 at each Hour")
-for (i in year){
-  for (j in month){
-    polar.plot(aq_monthly_by_hour$PM2.5.level[aq_monthly_by_hour$month == j & 
-                                                aq_monthly_by_hour$year == i], 
-               start = 90, 
-               clockwise = T, 
-               rp.type = "polygon",
-               line.col = "lightgrey", 
-               show.grid.labels = 1,
-               labels = aq_monthly_by_hour$hour,
-               label.pos = seq(0,360, by = 15),
-               radial.lim = c(0, 250),
-               lwd = 0.2,
-               add = TRUE)
-    }
-  }
-
-polar.plot(aq_by_hour$PM2.5.level,
-           start = 90, # move 00 to top
-           clockwise = T,
-           rp.type = "polygon", # connect 23 to 00
-           line.col = "blue", 
-           show.grid.labels = 1, # (1-4) 1 = move labels to vertical axis on bottom
-           labels = aq_by_hour$hour, # outside labels
-           label.pos = seq(0,360, by = 15), 
-           radial.lim = c(0, 250), # defaults to min and max
-           add = TRUE)
-polar.plot(aq_monthly_by_hour$PM2.5.level[aq_monthly_by_hour$month == "2" & aq_monthly_by_hour$year == "2016"], 
-           start = 90, 
-           clockwise = T, 
-           rp.type = "polygon",
-           line.col = "green", 
-           show.grid.labels = 1,
-           labels = aq_monthly_by_hour$hour,
-           label.pos = seq(0,360, by = 15),
-           radial.lim = c(0, max(aq_by_hour$PM2.5.level)),
-           add = TRUE)
-legend("bottomright", lty = 1, col = c("lightgrey", "blue", "green"), 
-       legend = c("PM2.5 level each month", "Mean", "Feb 2016"),
-       box.lwd = 0)
-###########################################################################
-polar.plot(aq_by_hour$Concentration,
-           start = 90, # move 00 to top
-           clockwise = T,
-           rp.type = "polygon", # connect 23 to 00
-           line.col = "blue", 
-           show.grid.labels = 1, # (1-4) 1 = move labels to vertical axis on bottom
-           labels = aq_by_hour$hour, # outside labels
-           label.pos = seq(0,360, by = 15), 
-           radial.lim = c(0, 250),
-           # main = paste("Mean PM 2.5 and Concentration", "at each Hour in Beijing", sep = "\n"))
-           main = "Monthly Mean Concentration at each Hour")
-for (i in year){
-  for (j in month){
-    polar.plot(aq_monthly_by_hour$Concentration[aq_monthly_by_hour$month == j & 
-                                                aq_monthly_by_hour$year == i], 
-               start = 90, 
-               clockwise = T, 
-               rp.type = "polygon",
-               line.col = "lightgrey", 
-               show.grid.labels = 1,
-               labels = aq_monthly_by_hour$hour,
-               label.pos = seq(0,360, by = 15),
-               radial.lim = c(0, 250),
-               lwd = 0.2,
-               add = TRUE)
-  }
-}
-
-polar.plot(aq_by_hour$Concentration,
-           start = 90, # move 00 to top
-           clockwise = T,
-           rp.type = "polygon", # connect 23 to 00
-           line.col = "red", 
-           show.grid.labels = 1, # (1-4) 1 = move labels to vertical axis on bottom
-           labels = aq_by_hour$hour, # outside labels
-           label.pos = seq(0,360, by = 15), 
-           radial.lim = c(0, 250), # defaults to min and max
-           add = TRUE)
-polar.plot(aq_monthly_by_hour$Concentration[aq_monthly_by_hour$month == "2" & aq_monthly_by_hour$year == "2016"], 
-           start = 90, 
-           clockwise = T, 
-           rp.type = "polygon",
-           line.col = "black", 
-           show.grid.labels = 1,
-           labels = aq_monthly_by_hour$hour,
-           label.pos = seq(0,360, by = 15),
-           radial.lim = c(0, max(aq_by_hour$PM2.5.level)),
-           add = TRUE)
-legend("bottomright", lty = 1, col = c("lightgrey", "red", "black"), 
-       legend = c("PM2.5 con. each month", "Mean", "Feb 2016"),
-       box.lwd = 0)
-```
-
-
-### Mean PM2.5 Level by Month
-```{r}
-aq_by_month <- aq_by_month %>%
-    mutate(yrmonth =  factor(yrmonth, levels = yrmonth_order)) %>%
-   arrange(yrmonth)
-plot(aq_by_month$PM2.5.level,
-     type = "b",
-     axes = FALSE,
-     xlab = "Year-Month",
-     ylab = "PM2.5",
-     main="Mean PM 2.5 Level by Month",
-     ylim = c(0,250),
-     pch = 16,
-     col = "grey")
-  axis(1, at= seq(1,73,by=2), 
-       tck = FALSE,
-       labels = FALSE)
-  text(seq(1,73,by=2), par("usr")[3]-0.5, 
-       srt = 60, adj= 1, xpd = TRUE,
-       labels = paste(levels(aq_by_month$yrmonth)[seq(1,73,by=2)]), 
-       cex=0.8)
-  axis(2, at= seq(0,(max(aq_by_month$PM2.5.level)+50),by=50),
-       tck = 0, las = 1,
-       labels = seq(0,(max(aq_by_month$PM2.5.level)+50),by=50))
-  par(xpd = FALSE)
-  grid()
-   points(x = aq_by_month$yrmonth[aq_by_month$yrmonth =="2016-2"],
-        y = min(aq_by_month$PM2.5.level),
-        col = "red",
-        pch = 16)
-   points(x = aq_by_month$yrmonth[aq_by_month$yrmonth =="2011-1"],
-         y = aq_by_month$PM2.5.level[aq_by_month$yrmonth=="2011-1"],
-         col = "blue",
-         pch = 16)
-   text(x = aq_by_month$yrmonth[aq_by_month$yrmonth =="2015-10"],
-       y = min(aq_by_month$PM2.5.level)-20,
-       paste("PM2.5 = ", round(min(aq_by_month$PM2.5.level),2)," in Feb 2016", sep = "\n"),
-       adj = c(0,1),
-       offset = c(0,-2))
-   text(x = aq_by_month$yrmonth[aq_by_month$yrmonth =="2011-2"],
-       y = aq_by_month$PM2.5.level[aq_by_month$yrmonth=="2011-1"]-20,
-       paste("PM2.5 = ", round(aq_by_month$PM2.5.level[aq_by_month$yrmonth=="2011-1"],2), 
-             "in Jan 2011", sep = "\n"),
-       adj = c(0,1))
-```
-
 

@@ -10,10 +10,11 @@
 
 
 # make new variable to use the current directory
-DIR=./air_files
-
+chmod 777 ./
+DIR=air_data/raw
 rm -rf $DIR # remove previous attempts
-mkdir $DIR # remake the directory
+mkdir -p $DIR # remake the directory
+
 cd $DIR # move into the new directory
 
 # make two array variables with the months and elements
@@ -35,7 +36,6 @@ for ANO in {2008..2015}
 done
 
 
-cd air_files/
 for file in *PM%202.5.txt ; do mv "$file" "${file//%202.5/25}" ; done
 
 #We want to create a new file that has the following columns:
@@ -50,8 +50,19 @@ awk ' BEGIN { FS=";" }
     { if (NR==1) 
         {  print "yyyy.mm.dd.hh\t" "Type\t" "Cotocollao\t" "Carapungo\t" "Belisario\t" "Jipijapa\t" "El Camal\t" "Centro\t" "Guamani\t" "Tumbaco\t" "Los Chillos\t" "El Condado\t" "Turubamba\t" "Chillogallo" } 
         else { split(FILENAME,a,"_"); split(a[3],b,".");
-            if (FNR>1) print substr(FILENAME,0,4)"-"substr(FILENAME,6,3)"-"$1"-"$2"\t" b[1]"\t" $3"\t" $4"\t" $5"\t" $6"\t" $7"\t" $8"\t" $9"\t" $10"\t" $11"\t" $12"\t" $13"\t" $14 }
-    }' *.txt > air_quality.tsv
+            if (FNR>1) print substr(FILENAME,0,4)"-"substr(FILENAME,6,3)"-"$1" "$2 ":00\t" b[1]"\t" $3"\t" $4"\t" $5"\t" $6"\t" $7"\t" $8"\t" $9"\t" $10"\t" $11"\t" $12"\t" $13"\t" $14 }
+    }' *.txt > temp.tsv
+
+cd ../
+awk '{ gsub("Ene", "01");gsub("Feb", "02"); gsub("Mar", "03"); gsub("Abr","04"); gsub("May", "05"); 
+gsub("Jun", "06");gsub("Jul", "07"); gsub("Ago", "09"); gsub("Oct", "10"); gsub("Nov", "11"); 
+gsub("Dic", "12"); gsub("-1 ","-01 ");gsub("-2 ","-02 ");gsub("-3 ","-03 "); gsub("-4 ","-04 ");
+gsub("-5 ","-05 "); gsub("-6 ","-06 "); gsub("-7 ","-07 "); gsub("-8 ","-08 "); gsub("-9 ","-09 ");
+gsub(" 0:"," 00:"); gsub(" 1:"," 01:"); gsub(" 2:"," 02:"); gsub(" 3:"," 03:"); gsub(" 4:"," 04:");
+gsub(" 5:"," 05:"); gsub(" 6:"," 06:"); gsub(" 7:"," 07:"); gsub(" 8:"," 08:"); gsub(" 9:"," 09:");  print }' raw/temp.tsv > air_quality.tsv
+
+rm raw/temp.tsv
+
 #iconv air_quality.tsv -f iso-8859-1 -t UTF-8 -c | 
 
 #take a look at the tail to make sure the type of reading came through
