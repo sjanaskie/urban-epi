@@ -38,7 +38,7 @@ aq[, 3:14] <- sapply(aq[, 3:14], as.numeric) #creates some NAs from the NDs, #la
 #aq$hour <- as.factor(hour(aq$date))
 
 # prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
-#lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
+lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
 
 ## TIDY DATA
 # new df - make station columns turn into rows, drop three stations that are all NAs
@@ -69,7 +69,7 @@ aq$mean <- apply(aq[, 3:14], 1, mean, na.rm = T)
 # when they are active
 a[!is.na(a$conc),] %>% 
 	group_by(station) %>%
-	summarize(start = .$date[1], end = .$date[nrow(.)])
+	summarize(start = date[1], end = date[n()])
 
 # histogram of dates for each sensor
 ggplot(a, aes(x = date)) + 
@@ -88,33 +88,33 @@ a %>%
 # Then we should count daily exceedances for each sensor and the average. 
 # make category for each group of exceedances
 
-# CO need 8 hour avg (ug/m3)
+# CO need 8 hour avg (ug/m3), units different from legis? max value is 11.7 from Carapungo but lowest legislated value is 15000
 a[!is.na(a$conc),] %>% 
 	filter(chem == "CO") %>%
-	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>%
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
 	group_by(station) %>% 
-	summarize(Alert_ex = .>1.5E4, Alarm_ex = .>3E4, Emergy_ex = 4E4)
+	summarize(Alert_ex = sum(conc > 1.5E4) , Alarm_ex = sum(conc > 3E4), Emergy_ex = sum(conc > 4E4))
 
 # O3 avg in 8 hours
 a[!is.na(a$conc),] %>% 
 	filter(chem == "O3") %>%
 	mutate(O3.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>%
 	group_by(station) %>%
-	summarize(Alert_ex = 2E2, Alarm_ex = 4E2 , Emergy_ex = 6E2)
+	summarize(Alert_ex = sum(conc > 2E2), Alarm_ex = sum(conc > 4E2), Emergy_ex = sum(conc > 6E2))
 
 # PM 2.5 in 24 hours
 a[!is.na(a$conc),] %>% 
 	filter(chem == "PM25") %>%
 	mutate(PM25.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
 	group_by(station) %>%
-	summarize(Alert_ex = .>1.5E2, Alarm_ex = .>2.5E2)
+	summarize(Alert_ex = sum(conc>1.5E2), Alarm_ex = sum(conc>2.5E2))
 
 # SO2 in 24 hours
 a[!is.na(a$conc),] %>% 
 	filter(chem == "CO") %>%
 	mutate(SO2.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
 	group_by(station) %>%
-	summarize(Alert_ex = .>2E2, Alarm_ex = .>1E3, Emergy_ex = .>1.8E3)
+	summarize(Alert_ex = sum(conc>2E2), Alarm_ex = sum(conc>1E3), Emergy_ex = sum(conc>1.8E3))
 
 ```
 
