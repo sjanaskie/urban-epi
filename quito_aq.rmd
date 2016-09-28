@@ -11,6 +11,7 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8,
 ```
 
 ```{r}
+library(zoo)
 library(lubridate)
 #library(plotrix)
 library(dplyr)
@@ -65,12 +66,6 @@ a[!is.na(a$conc),] %>%
 # row means for each
 aq$mean <- apply(aq[, 3:14], 1, mean, na.rm = T)
 
-#For each sensor, let’s figure out how many readings they’ve made and when they are active.
-a[!is.na(a$conc),] %>% 
-	group_by(station, chem) %>%
-	summarize(n = n()) %>%
-	arrange(n)
-
 # when they are active
 a[!is.na(a$conc),] %>% 
 	group_by(station) %>%
@@ -89,44 +84,35 @@ a %>%
 	facet_wrap(~station)
 ```
 
-
-
-
-Sulfur Dioxide (Average concentration in 24 hours) (μg/m3)
-200
-1000
-1800
-
-PM 2.5 (Average concentration in 24 hours) (μg/m3)
-150
-250
-
-Carbon Monoxide (Average concentration in 8 hours) (μg/m3)
 ```{r}
 # Then we should count daily exceedances for each sensor and the average. 
 # make category for each group of exceedances
 
-# CO need 8 hour avg
+# CO need 8 hour avg (ug/m3)
 a[!is.na(a$conc),] %>% 
 	filter(chem == "CO") %>%
-	group_by(station) %>%
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>%
+	group_by(station) %>% 
 	summarize(Alert_ex = .>1.5E4, Alarm_ex = .>3E4, Emergy_ex = 4E4)
 
 # O3 avg in 8 hours
 a[!is.na(a$conc),] %>% 
-	filter(chem == "CO") %>%
+	filter(chem == "O3") %>%
+	mutate(O3.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>%
 	group_by(station) %>%
 	summarize(Alert_ex = 2E2, Alarm_ex = 4E2 , Emergy_ex = 6E2)
 
 # PM 2.5 in 24 hours
 a[!is.na(a$conc),] %>% 
-	filter(chem == "CO") %>%
+	filter(chem == "PM25") %>%
+	mutate(PM25.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
 	group_by(station) %>%
 	summarize(Alert_ex = .>1.5E2, Alarm_ex = .>2.5E2)
 
 # SO2 in 24 hours
 a[!is.na(a$conc),] %>% 
 	filter(chem == "CO") %>%
+	mutate(SO2.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
 	group_by(station) %>%
 	summarize(Alert_ex = .>2E2, Alarm_ex = .>1E3, Emergy_ex = .>1.8E3)
 
