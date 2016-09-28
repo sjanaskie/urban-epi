@@ -87,9 +87,49 @@ a %>%
 	ggplot(aes(x = month)) + 
 	geom_histogram() + 
 	facet_wrap(~station)
+```
 
+
+
+
+Sulfur Dioxide (Average concentration in 24 hours) (μg/m3)
+200
+1000
+1800
+
+PM 2.5 (Average concentration in 24 hours) (μg/m3)
+150
+250
+
+Carbon Monoxide (Average concentration in 8 hours) (μg/m3)
+```{r}
 # Then we should count daily exceedances for each sensor and the average. 
 # make category for each group of exceedances
+
+# CO need 8 hour avg
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = .>1.5E4, Alarm_ex = .>3E4, Emergy_ex = 4E4)
+
+# O3 avg in 8 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = 2E2, Alarm_ex = 4E2 , Emergy_ex = 6E2)
+
+# PM 2.5 in 24 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = .>1.5E2, Alarm_ex = .>2.5E2)
+
+# SO2 in 24 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = .>2E2, Alarm_ex = .>1E3, Emergy_ex = .>1.8E3)
+
 ```
 
 
