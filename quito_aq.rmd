@@ -12,53 +12,84 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8,
 
 ```{r}
 library(lubridate)
-library(plotrix)
+#library(plotrix)
 library(dplyr)
-library(animation)
+#library(animation)
+library(tidyr)
+library(ggplot2)
+
+## READ IN DATA
 aq <- read.table("~/code/urban-epi/air_files/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
 
+## COLUMN VARIABLES TO CORRECT CLASS
+# date to posix
 # abbreviated month name in spanish? need to set sys locale to understand
 Sys.setlocale(locale="es_ES.utf8")
+aq$date <- as.POSIXct(parse_date_time(aq$yyyy.mm.dd.hh,"%Y-%b-%d-%H")) #432 failed to parse
+# chemical type to factor
+aq$Type <- as.factor(aq$Type)
+# make conc values numeric from character. 
+aq[, 3:14] <- sapply(aq[, 3:14], as.numeric) #creates some NAs from the NDs, #last three stations all NAs?
+# make new factors out of date data
+#aq$yrmonth <- as.factor(paste(year(aq$date),month(aq$date),sep="-"))
+#aq$year <- as.factor(year(aq$date))
+#aq$month <- as.factor(month(aq$date))
+#aq$hour <- as.factor(hour(aq$date))
 
-#note 432 failed to parse
-aq$date <- as.POSIXct(parse_date_time(aq$yyyy.mm.dd.hh,"%Y-%b-%d-%H"))
-aq$yrmonth <- as.factor(paste(year(aq$date),month(aq$date),sep="-"))
-aq$year <- as.factor(year(aq$date))
-aq$month <- as.factor(month(aq$date))
-aq$hour <- as.factor(hour(aq$date))
-str(aq)
+# prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
+#lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
 
-# drop last three stations from analysis because of all NAs
+## TIDY DATA
+# new df - make station columns turn into rows, drop three stations that are all NAs
+a <- aq %>%
+	gather(station, conc, 3:11)%>%
+	rename(chem = Type) %>%
+	select(date, station, chem, conc) 
 
-a <- aq
+a$station <- as.factor(a$station)
 
-## omit the ND to find lowest value to set ND to half
+## ANALYSIS
+# number of missing obs (31%)
+sum(is.na(a$conc))/length(a$conc)
+# number of obs for each Type
+lapply(split(aq[, 3:12], aq$Type), function(x) sum(!is.na(x)))
+# how many obs per station, showing 0 non NAs for El Condado?
+apply(aq[, 3:12], 2, function(x) sum(!is.na(x)))
 
-# make chemical type a factor
-a$Type <- as.factor(a$Type)
-
-# make numeric from character, creates nas
-a[, 3:14] <- sapply(a[, 3:14], as.numeric) 
-
-# make summary of data by each
-lapply(split(a[, 3:14], a$Type), summary, na.rm=T)
-
-# summary shows that minimum value for all pollutants in each station is 0 (except CO at Los.Chillos 0.04). Therefore, I suggest just dropping all NAs, NDs for analysis
+# make summary of data by each, drop NAs
+a[!is.na(a$conc),] %>% 
+	group_by(station, chem) %>%
+	summarize(mean_conc = mean(conc), max_conc = (max(conc)), n = n()) %>%
+	arrange(chem, desc(mean_conc))
 
 # row means for each
-a$mean <- apply(a[, 3:14], 1, mean, na.rm =T)
+aq$mean <- apply(aq[, 3:14], 1, mean, na.rm = T)
 
 #For each sensor, let’s figure out how many readings they’ve made and when they are active.
-#- You can present this in a simple excel or text doc just by looking at the data, if that's easier than trying to get R to write this #out.
+a[!is.na(a$conc),] %>% 
+	group_by(station, chem) %>%
+	summarize(n = n()) %>%
+	arrange(n)
 
-# histogram of dates for each sensor, histogram facetting by sensor for each month
+# when they are active
+a[!is.na(a$conc),] %>% 
+	group_by(station) %>%
+	summarize(start = .$date[1], end = .$date[nrow(.)])
 
+# histogram of dates for each sensor
+ggplot(a, aes(x = date)) + 
+	geom_histogram(bins=98) + #8yr*12mo 
+	facet_wrap(~station)
 
+# histogram facetting by sensor for each month
+a %>% 
+	mutate(month = month(date)) %>%
+	ggplot(aes(x = month)) + 
+	geom_histogram() + 
+	facet_wrap(~station)
 
 # Then we should count daily exceedances for each sensor and the average. 
 # make category for each group of exceedances
-
-
 ```
 
 
