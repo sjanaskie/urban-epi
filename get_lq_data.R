@@ -67,7 +67,7 @@ rownames(data) <- data$area_fips
 colnames(data) <- c("Producing",	"NatRes",	"Construction",	"Manufacturing",	
                     "Services",	"Trade", "Information",	"Financial",	"Professional",	
                     "EducationHealth",	"Hospitality",	"Other",	
-                    "Public",	"Unclassified"))
+                    "Public",	"Unclassified")
 
 str(data) # look at structure of the data
 

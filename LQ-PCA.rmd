@@ -14,10 +14,11 @@ library(dplyr)
 library(data.table)
 ```
 
-```{r getData}
+```{r getCountyData}
 counties <- readOGR("https://datahub.io/dataset/e82a4e76-ccf0-4d3a-b2c8-eda2b52ab32a/resource/f2693c94-fd69-4baf-887b-f302a5188ead/download/counties.geojson",
                     "OGRGeoJSON")
 counties@data$FIPS <- as.character(counties@data$FIPS)
+
 for (i in 1:nrow(counties@data) ) {
   if ( nchar( counties@data$FIPS[i] ) == 4) {
     counties@data$FIPS[i] <- paste("0",as.character(counties@data$FIPS[i]), sep = "")
@@ -26,9 +27,14 @@ for (i in 1:nrow(counties@data) ) {
   }
 }
 counties@data$FIPS <- as.factor(counties@data$FIPS)
-str(counties@data$FIPS)
+#str(counties@data$FIPS)
 counties@data <- counties@data[,1:10]
+counties@data <- counties@data[order(counties@data$FIPS),]
+```
 
+
+
+```{r getIndustryData}
 sectors <- data.frame(cbind(
   c("11",	"21",	"22",	"23",	"31_33",	"42",	"48_49",	
     "51",	"52",	"53",	"54",	"55",	"56",	"61", "62","71","72","81","92"),
@@ -70,6 +76,7 @@ for (i in 1:length(sectors[,1])) {
       }
   
 }
+dat <- data
 ```
 
 #### Assign row names and column names for reference through the transformations
@@ -81,7 +88,7 @@ colnames(data) <- c("FIPS", "AgriForest",	"Mining",	"Utilities",	"Construction",
     "Finance",	"RealEstate",	"ProfScienceTech", "Management",	"AdminWasteManagement",
     "Education","HealthCare", "AccomodationFood","Other","PubAdmin")
 glimpse(data)
-str(data)
+#str(data)
 ```
 
 ```{r calculateLQ}
@@ -96,7 +103,7 @@ mat <- data.matrix( data[ ,2:length(data[1,]) ] )
 
 # Calculate the LQ
 share_tech_city <- mat / rowSums (mat)
-share_tech_city
+#share_tech_city
 
 share_tech_total <- colSums (mat) / sum (mat)
 share_tech_total
@@ -112,6 +119,7 @@ colnames(lq) <- list("AgriForest",	"Mining",	"Utilities",	"Construction",
     "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",
     "Finance",	"RealEstate",	"ProfScienceTech", "Management",	"AdminWasteManagement",
     "Education","HealthCare", "AccomodationFood","Other","PubAdmin")
+
 head(lq)
 ```
 
@@ -132,7 +140,11 @@ Factor analysis provides insight to the underlying relationship between multiple
 
 fact1=factanal(lq[,c(1:17,19)],factors=5,rotation="varimax")
 fact1
+```
 
+
+
+```{r plotLoadings echo=FALSE }
 #get loading plot for factors 1 by 2-5
 par(mfrow=c(3,3),mar = c(4,4,1,1))
 plot(fact1$loadings, pch=18, col='red')
@@ -202,74 +214,380 @@ sum(rep(1,len)[abs(resid1[upper.tri(resid1)])>0.05])/len
 ## Factor Characterizations
 To make these factors understandable, we will go through each factor, look at the loadings and name them based on what they represent.
 ####Factor 1: 
-The first factor has relatively high scores in Produducing and Natural Resources, and relatively low scores in Services. So counties with high scores in this factor would be 
+The first factor has relatively high scores in Management, Real Estate, and Transportation. Counties with high scores are in urban areas and surrounding counties. These counties follow major highways and corridors between cities, mostly on the East Coast. These areas have strong negative correlations with Manufacturing industry
 
 ```{r createFactCols }
-fal <- matrix(fact1$loadings[c(1:18),],nrow=18, ncol=5, dimnames = list(c("AgriForest",	"Mining",	"Utilities",	"Construction",	
-    "Manufacturing",	"WholeTrade", "RetailTrade",	"Transportation",	"Information",	"Finance",	"RealEstate",	"ProfScienceTech",	
-    "Management",	"AdminWasteManagement","Education","HealthCare","AccomodationFood","PubAdmin"), 
-    c("Factor1", "Factor2",   "Factor3",   "Factor4",    "Factor5")))
+fal <- matrix(fact1$loadings[c(1:18),],nrow=18, ncol=5, 
+              dimnames = list(c("AgriForest","Mining", "Utilities","Construction",
+                                "Manufacturing",  "WholeTrade", "RetailTrade","Transportation",  
+                                "Information", "Finance", "RealEstate",  "ProfScienceTech", 
+                                "Management",  "AdminWaste","Education","HealthCare",
+                                "AccomodationFood", "PubAdmin"), 
+    c("RealEstate_and_Transportation", "HealthCare_and_Accomodations", "Educational", "Mining", "PublicAdministration")))
 
-for (i in 1:nrow(lq)) {
-  
-   lq$fact1[i] <- sum(data.frame(
-     mapply(`*`,lq[ i, c(5,6,8:13,15,17,18)], fal[c(5,6,8:13,15,17,18),1],SIMPLIFY=FALSE))
-     )
-   ############
-   lq$fact2[i] <- sum(data.frame(
-     mapply(`*`,lq[ i, c(4:7,9:12,14,15)], fal[c(1:4,6:9,11,12),2],SIMPLIFY=FALSE))
-     )
-   lq$fact3[i] <- sum(data.frame(
-     mapply(`*`,lq[ i, c(4:9,14,16)], fal[c(1:6,11,13),3],SIMPLIFY=FALSE))
-     )
-   lq$fact4[i] <- sum(data.frame(
-     mapply(`*`,lq[ i, c(4,6,7,12,13)], fal[c(1,3,4,9,10),4],SIMPLIFY=FALSE))
-     )
-   lq$fact5[i] <- sum(data.frame(
-     mapply(`*`,lq[ i, c(4,5,7,14,15)], fal[c(1,2,4,11,12),5],SIMPLIFY=FALSE))
-     )
-}
 
 lqdf <- as.data.frame(lq)
-str(lq)
-
-
 lqdf$FIPS <- rownames(lqdf)
-str(lqdf)
+
+### Loop through the lq matrix and multiply 
+for (i in 1:nrow(lq)) {
+   lqdf$fact1[i] <- sum(data.frame(
+     mapply(`*`,lqdf[ i, c(5,6,8:13,15,17,18)], fal[c(5,6,8:13,15,17,18),1],SIMPLIFY=FALSE)) )
+   lqdf$fact2[i] <- sum(data.frame(
+     mapply(`*`,lqdf[ i, c(5:7,10,16,17)], fal[c(5:7,10,16,17),2],SIMPLIFY=FALSE)) )
+   lqdf$fact3[i] <- sum(data.frame(
+     mapply(`*`,lqdf[ i, c(4,5,11,12,14,15,17)], fal[c(4,5,11,12,14,15,17),3],SIMPLIFY=FALSE)) )
+   lqdf$fact4[i] <- sum(data.frame(
+     mapply(`*`,lqdf[ i, c(1:8,12,14,15,17)], fal[c(1:8,12,14,15,17),4],SIMPLIFY=FALSE)) )
+   lqdf$fact5[i] <- sum(data.frame(
+     mapply(`*`,lqdf[ i, c(3,5,13,15,18)], fal[c(3,5,13,15,18),5],SIMPLIFY=FALSE)) )
+}
+
+lqdf$FIPS <- data$FIPS
+counties@data <- join(x = counties@data, y = lqdf, by = "FIPS")
 ```
 
 
-```{r mergeCounties}
-setkey(counties@data,FIPS)
-setkey(lqdf ,FIPS)
-counties@data <- merge(x = counties@data, y = lq, all.x = TRUE)
-str(counties@data)
-```
 
 [leaflet link](https://rstudio.github.io/leaflet/showhide.html)
-```{r leaflet, warning=FALSE }
+```{r leafletFactor, warning=FALSE }
 library(rgdal)
 library(leaflet)
 library(shiny)
 
-pal <- colorQuantile("YlGn", NULL, n = 5)
+pal <- colorQuantile("YlGn", NULL, n = 10)
 
 county_popup <- paste0("<strong>County: </strong>", 
                       counties$NAME, 
-                      "<br><strong>Factor 1 Score: </strong>", 
+                      "<br><strong>RealEstate_and_Transportation: </strong>", 
                       round(counties$fact1),2)
+county_popup2 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>HealthCare_and_Accomodations2: </strong>", 
+                      round(counties$fact2),2)
+county_popup3 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Educational: </strong>", 
+                      round(counties$fact3),2)
+county_popup4 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Mining: </strong>", 
+                      round(counties$fact4),2)
+county_popup5 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>PublicAdministration: </strong>", 
+                      round(counties$fact5),2)
 
 leaflet() %>%
-  setView(lng = -90, lat = 37, zoom = 3) %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data = counties, 
-              group = "factors",
-              fillColor = ~pal(fact1),
+  setView(lng = -90, lat = 37, zoom = 3) %>% # center view on the US
+  addProviderTiles("CartoDB.Positron") %>% # this sets the base layer
+  addPolygons(data = counties,  # spatialPolygonDataFrame - could be lines or points
+              group = "RealEstate_and_Transportation", # this matches "base groups" below
+              fillColor = ~ pal(fact1), # define the color column
+              stroke = FALSE, # no outline
+              fillOpacity = 0.6, 
+              color = "#FFFFFF", 
+              weight = 1, 
+              popup = county_popup) %>%
+    addPolygons(data = counties, 
+              group = "HealthCare_and_Accomodations",
+              fillColor = ~ pal(fact2),
               stroke = FALSE,
               fillOpacity = 0.6, 
               color = "#BDBDC3", 
               weight = 1, 
-              popup = county_popup)
-
+              popup = county_popup2) %>%
+    addPolygons(data = counties, 
+              group = "Educational",
+              fillColor = ~ pal(fact3),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup3) %>%
+    addPolygons(data = counties, 
+              group = "Mining",
+              fillColor = ~ pal(fact4),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup4) %>%
+    addPolygons(data = counties, 
+              group = "PublicAdministration",
+              fillColor = ~ pal(fact5),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup5) %>%
+  addLayersControl(
+    baseGroups = c("RealEstate_and_Transportation", "HealthCare_and_Accomodations", "Educational", "Mining","PublicAdministration"),
+    #overlayGroups = c("Quakes", "Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
 ```
+
+```{r leafletIndustry, warning=FALSE}
+pal <- colorQuantile("YlGn", NULL, n = 10)
+
+county_popup <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Agriculture & Forest: </strong>", 
+                      round(counties$AgriForest),2)
+county_popup2 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Mining: </strong>", 
+                      round(counties$Mining),2)
+county_popup3 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Utilities: </strong>", 
+                      round(counties$Utilities),2)
+county_popup4 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Construction: </strong>", 
+                      round(counties$Construction),2)
+county_popup5 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Manufacturing: </strong>", 
+                      round(counties$Manufacturing),2)
+county_popup6 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Wholesale Trade: </strong>", 
+                      round(counties$WholeTrade),2)
+county_popup7 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Retail Trade: </strong>", 
+                      round(counties$RetailTrade),2)
+county_popup8 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Transportation: </strong>", 
+                      round(counties$Transportation),2)
+county_popup9 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Information: </strong>", 
+                      round(counties$Information),2)
+county_popup10 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Finance: </strong>", 
+                      round(counties$Finance),2)
+county_popup11 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Real Estate: </strong>", 
+                      round(counties$RealEstate),2)
+county_popup12 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Science and Technology: </strong>", 
+                      round(counties$ProfScienceTech),2)
+county_popup13 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Business Management: </strong>", 
+                      round(counties$Management),2)
+county_popup14 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Administrative and Waste Management: </strong>", 
+                      round(counties$AdminWasteManagement),2)
+county_popup15 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Education: </strong>", 
+                      round(counties$Education),2)
+county_popup16 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Health Care: </strong>", 
+                      round(counties$HealthCare),2)
+county_popup17 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Food and Hospitality: </strong>", 
+                      round(counties$AccomodationFood),2)
+county_popup18 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Other: </strong>", 
+                      round(counties$Other),2)
+county_popup19 <- paste0("<strong>County: </strong>", 
+                      counties$NAME, 
+                      "<br><strong>Public Administration: </strong>", 
+                      round(counties$PubAdmin),2)
+
+
+leaflet() %>%
+  setView(lng = -90, lat = 37, zoom = 3) %>% # center view on the US
+  addProviderTiles("CartoDB.Positron") %>% # this sets the base layer
+  addPolygons(data = counties,  # spatialPolygonDataFrame - could be lines or points
+              group = "Agriculture and Forest", # this matches "base groups" below
+              fillColor = ~ pal(AgriForest), # define the color column
+              stroke = FALSE, # no outline
+              fillOpacity = 0.6, 
+              color = "#FFFFFF", 
+              weight = 1, 
+              popup = county_popup) %>%
+  
+    addPolygons(data = counties, 
+              group = "Mining",
+              fillColor = ~ pal(Mining),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup2) %>%
+  
+    addPolygons(data = counties, 
+              group = "Utilities",
+              fillColor = ~ pal(Utilities),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup3) %>%
+  
+    addPolygons(data = counties, 
+              group = "Construction",
+              fillColor = ~ pal(Construction),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup4) %>%
+  
+    addPolygons(data = counties, 
+              group = "Manufacturing",
+              fillColor = ~ pal(Manufacturing),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup5) %>%
+  
+      addPolygons(data = counties, 
+              group = "Wholesale Trade",
+              fillColor = ~ pal(WholeTrade),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup6) %>%
+  
+      addPolygons(data = counties, 
+              group = "Retail Trade",
+              fillColor = ~ pal(RetailTrade),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup7) %>%
+  
+      addPolygons(data = counties, 
+              group = "Transportation",
+              fillColor = ~ pal(Transportation),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup8) %>%
+  
+      addPolygons(data = counties, 
+              group = "Information",
+              fillColor = ~ pal(Information),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup9) %>%
+  
+      addPolygons(data = counties, 
+              group = "Finance",
+              fillColor = ~ pal(Finance),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup10) %>%
+  
+      addPolygons(data = counties, 
+              group = "Real Estate",
+              fillColor = ~ pal(RealEstate),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup11) %>%
+  
+      addPolygons(data = counties, 
+              group = "Science and Technology",
+              fillColor = ~ pal(ProfScienceTech),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup12) %>%
+  
+      addPolygons(data = counties, 
+              group = "Business Management",
+              fillColor = ~ pal(Management),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup13) %>%
+  
+      addPolygons(data = counties, 
+              group = "Administrative and Waste Management",
+              fillColor = ~ pal(AdminWasteManagement),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup14) %>%
+  
+      addPolygons(data = counties, 
+              group = "Education",
+              fillColor = ~ pal(Education),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup15) %>%
+  
+      addPolygons(data = counties, 
+              group = "Health Care",
+              fillColor = ~ pal(HealthCare),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup16) %>%
+  
+      addPolygons(data = counties, 
+              group = "Health Care",
+              fillColor = ~ pal(HealthCare),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup17) %>%
+  
+     addPolygons(data = counties, 
+              group = "Food and Hospitality",
+              fillColor = ~ pal(AccomodationFood),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup18) %>%
+  
+      addPolygons(data = counties, 
+              group = "Public Administration",
+              fillColor = ~ pal(PubAdmin),
+              stroke = FALSE,
+              fillOpacity = 0.6, 
+              color = "#BDBDC3", 
+              weight = 1, 
+              popup = county_popup18) %>%
+  
+  addLayersControl(
+    baseGroups = c("RealEstate_and_Transportation", "HealthCare_and_Accomodations", "Educational", "Mining","PublicAdministration"),
+    #overlayGroups = c("Quakes", "Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
 
