@@ -373,7 +373,7 @@ idw <- idw(formula = na.omit(X176934) ~ 1, locations = test_sp,
 idw.output = as.data.frame(idw)  # output is defined as a data table
 names(idw.output)[1:3] <- c("long", "lat", "var1.pred")  # give names to the modelled variables
 
-ggplot(aes(label = rownames(test_df))) + geom_tile(data = idw.output, aes(x = long, y = lat, fill = var1.pred)) + 
+ggplot() + geom_tile(data = idw.output, aes(x = long, y = lat, fill = var1.pred)) + 
   geom_point(data = test_df, aes(x = x, y = y), shape = 21, 
              colour = "red")
 
