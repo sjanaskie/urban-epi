@@ -1,0 +1,166 @@
+---
+title: "Quito air quality - modeled on Beijing Air Quality"
+author: "Moroney & Thomas"
+date: "Sep 21, 2016"
+output: html_document
+---
+
+``````{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8,
+                      warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(zoo)
+library(lubridate)
+#library(plotrix)
+library(dplyr)
+#library(animation)
+library(tidyr)
+library(ggplot2)
+
+## READ IN DATA
+aq <- read.table("~/Documents/r/urban-epi-git/air_data/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
+
+## COLUMN VARIABLES TO CORRECT CLASS
+# date to posix
+# abbreviated month name in spanish? need to set sys locale to understand
+Sys.setlocale(locale="es_ES.utf8")
+aq$date <- as.POSIXct(strptime(aq$yyyy.mm.dd.hh,"%Y-%m-%d %H:%M")) #432 failed to parse
+# chemical type to factor
+aq$Type <- as.factor(aq$Type)
+
+
+# make concatenated values numeric from character.
+# Why not just assign these to NA directly with 
+
+aq[, 3:14] <- sapply(aq[, 3:14], as.numeric)
+
+#creates some NAs from the NDs, 
+#last three stations all NAs?
+
+# make new factors out of date data
+#aq$yrmonth <- as.factor(paste(year(aq$date),month(aq$date),sep="-"))
+#aq$year <- as.factor(year(aq$date))
+#aq$month <- as.factor(month(aq$date))
+#aq$hour <- as.factor(hour(aq$date))
+
+# prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
+<<<<<<< HEAD
+
+=======
+>>>>>>> 55d41a14b85e359fd8a1c6079aa1c898cc735d8a
+lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
+
+## TIDY DATA
+# new df - make station columns turn into rows, drop three stations that are all NAs
+a <- aq %>%
+	gather(station, conc, 3:11)%>%
+	rename(chem = Type) %>%
+	select(date, station, chem, conc) 
+
+a$station <- as.factor(a$station)
+
+## ANALYSIS
+# number of missing obs (31%)
+sum(is.na(a$conc))/length(a$conc)
+# number of obs for each Type
+readings <- lapply(split(aq[, 3:12], aq$Type), function(x) sum(!is.na(x)))
+readings
+# how many obs per station, showing 0 non NAs for El Condado?
+apply(aq[, 3:12], 2, function(x) sum(!is.na(x)))
+
+# make summary of data by each, drop NAs
+a[!is.na(a$conc),] %>% 
+	group_by(station, chem) %>%
+	summarize(mean_conc = mean(conc), max_conc = (max(conc)), n = n()) %>%
+	arrange(chem, desc(mean_conc))
+
+# row means for each
+aq$mean <- apply(aq[, 3:14], 1, mean, na.rm = T)
+
+# when they are active
+a[!is.na(a$conc),] %>% 
+	group_by(station) %>%
+	summarize(start = date[1], end = date[n()])
+
+# histogram of dates for each sensor
+ggplot(a, aes(x = date)) + 
+	geom_histogram(bins=98) + #8yr*12mo 
+	facet_wrap(~station)
+
+# histogram facetting by sensor for each month
+a %>% 
+	mutate(month = month(date)) %>%
+	ggplot(aes(x = month)) + 
+	geom_histogram() + 
+	facet_wrap(~station)
+```
+
+<<<<<<< HEAD
+
+```{r}
+plot.new()
+par(mar=c(4,3,1,1),mfrow=c(4,3))
+mn<-sum(as.matrix(aq[aq$Type=="PM25",][,3:11]),na.rm = T)/readings$PM25
+for (i in 3:12) {
+  hist(log(aq[aq$Type=="PM25",i]),
+       breaks=20,
+       main=names(aq)[i],
+       ylab="freq",
+       xlab="log(PM 2.5)",
+       abline(v=log(mn),col="red")
+       )
+}
+
+
+```
+
+
+
+Sulfur Dioxide (Average concentration in 24 hours) (μg/m3)
+200
+1000
+1800
+
+PM 2.5 (Average concentration in 24 hours) (μg/m3)
+150
+250
+
+Carbon Monoxide (Average concentration in 8 hours) (μg/m3)
+=======
+>>>>>>> 55d41a14b85e359fd8a1c6079aa1c898cc735d8a
+```{r}
+# Then we should count daily exceedances for each sensor and the average. 
+# make category for each group of exceedances
+
+# CO need 8 hour avg (ug/m3), units different from legis? max value is 11.7 from Carapungo but lowest legislated value is 15000
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
+	group_by(station) %>% 
+	summarize(Alert_ex = sum(conc > 1.5E4) , Alarm_ex = sum(conc > 3E4), Emergy_ex = sum(conc > 4E4))
+
+# O3 avg in 8 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "O3") %>%
+	mutate(O3.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc > 2E2), Alarm_ex = sum(conc > 4E2), Emergy_ex = sum(conc > 6E2))
+
+# PM 2.5 in 24 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "PM25") %>%
+	mutate(PM25.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc>1.5E2), Alarm_ex = sum(conc>2.5E2))
+
+# SO2 in 24 hours
+a[!is.na(a$conc),] %>% 
+	filter(chem == "CO") %>%
+	mutate(SO2.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc>2E2), Alarm_ex = sum(conc>1E3), Emergy_ex = sum(conc>1.8E3))
+
+```
+

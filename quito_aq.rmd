@@ -1,0 +1,284 @@
+---
+title: "Quito air quality - modeled on Beijing Air Quality"
+author: "Moroney & Thomas"
+date: "Sep 21, 2016"
+output: pdf_document
+---
+```{r Global_options, include = FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8,warning=FALSE, message=FALSE)
+```
+
+```{r Load libraries, include = FALSE}
+library(zoo)
+library(janitor)
+library(lubridate)
+library(plotrix)
+library(dplyr)
+library(animation)
+library(tidyr)
+library(ggplot2)
+library(pander)
+```
+
+```{r Read data, include = FALSE}
+# Read Data
+aq <- read.table("~/code/urban-epi/air_data/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
+
+## Make columns correct classess
+# Create date posix date column
+aq$date <- as.POSIXct(strptime(aq$yyyy.mm.dd.hh,"%Y-%m-%d %H:%M"))
+
+# Make chemical Type to factor
+aq$Type <- as.factor(aq$Type)
+
+# Make stations numeric
+aq[, 3:14] <- sapply(aq[, 3:14], as.numeric)
+
+# Make new factors: dates for plotting 
+aq$yrmonth <- as.factor(paste(year(aq$date),month(aq$date),sep="-"))
+aq$year <- as.factor(year(aq$date))
+aq$month <- as.factor(month(aq$date))
+aq$hour <- as.factor(hour(aq$date))
+
+# prove 12:14 have all NAs with summary, shows all NAs for those three, but when using dplyr they aren't?
+#lapply(split(aq[, 3:14], aq$Type), summary, na.rm=T)
+```
+
+```{r Make Data Tidy, include = FALSE}
+# new tidy tf, station columns turn into rows
+a <- aq %>%
+	gather(station, conc, 3:14)%>%
+	rename(chem = Type) %>%
+	select(date, station, chem, conc)
+
+
+a[a$chem == "CO", ] <- filter(a, chem == "CO") %>%
+	mutate(conc = conc*1000) # convert mg/m3 to ug / m3
+a$station <- as.factor(a$station)
+```
+
+```{r Analysis, include = F}
+# number of NAs obs for each station
+na_pct <- a %>% 
+	group_by(station) %>%
+	summarise(NA.percent = round(sum(is.na(conc))/n()*100)) %>%
+	arrange(NA.percent) %>% 
+	slice(1:9)
+
+## keeper
+# When they are active with number of non NA obs
+a %>%
+	na.omit() %>%
+	group_by(station) %>%
+	summarize(start = date[1], end = round_date(last(date), unit = "day"), n = n()) %>%
+	left_join(na_pct) %>% 
+	as.data.frame() %>%
+	pander(caption = "Quito air monitoring stations")
+
+## keeper 2
+# number of obs for each chem type
+a %>%
+	group_by(chem) %>%
+	summarise(n = n()) %>%
+	arrange(desc(n)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of observations for each contaminant in Quito")
+
+# make summary of data by each, drop NAs
+a %>% 
+	na.omit() %>%
+	group_by(station, chem) %>%
+	summarise(mean_conc = round(mean(conc),2), max_conc = round((max(conc)),2), n = n()) %>%
+	arrange(chem, desc(mean_conc)) %>%
+	as.data.frame() %>%
+	pander(caption = "Max and mean for each chemical monitored at each station in Quito")
+
+# row means for each
+aq$mean <- apply(aq[, 3:14], 1, mean, na.rm = T)
+
+# CO exceedances 
+# hourly
+a %>% 
+	na.omit() %>%
+	group_by(station) %>% 
+	filter(chem == "CO") %>%
+	summarize(Alert_ex = sum(conc > 1.5E4) , Alarm_ex = sum(conc > 3E4), Emergency_ex = sum(conc > 4E4)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of hourly exceedances of legislated CO concentrations")
+
+# interesting to note high values los chillos station...max is 13x higher than next highest and min is 3x higher
+a %>% 
+	na.omit() %>%
+	group_by(station) %>%
+	filter(chem == "CO") %>% 
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
+	na.omit() %>%
+	summarize(Alert_ex = sum(CO.8 > 1.5E4) , Alarm_ex = sum(CO.8 > 3E4), Emergency_ex = sum(CO.8 > 4E4)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of CO exceedances of 8-hour rolling average concentrations in Quito")
+
+a %>% 
+	na.omit() %>%
+	group_by(station) %>%
+	filter(chem == "CO") %>% 
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
+	na.omit() %>%
+	summarize(min = min(CO.8), max=max(CO.8), n=n()) %>%
+	as.data.frame() %>%
+	pander(caption = "Min and Max CO 8-hour rolling average concentrations in Quito")
+# O3 exceedances
+# hourly max
+a %>% 
+	na.omit() %>%
+	filter(chem == "O3") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc > 2E2), Alarm_ex = sum(conc > 4E2), Emergy_ex = sum(conc > 6E2)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of hourly exceedances of legislated O3 concentrations")
+
+# 8 hr
+a %>% 
+	na.omit() %>%
+	group_by(station) %>%
+	filter(chem == "O3") %>%
+	mutate(O3.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
+	na.omit() %>%
+	summarize(Alert_ex = sum(O3.8 > 2E2), Alarm_ex = sum(O3.8 > 4E2), Emergy_ex = sum(O3.8 > 6E2)) %>%
+	pander(caption = "Number of 8-hr mean exceedances of legislated O3 concentrations")
+
+# SO2 hourly
+a %>% 
+	na.omit() %>%
+	filter(chem == "SO2") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc>2E2), Alarm_ex = sum(conc>1E3), Emergy_ex = sum(conc>1.8E3)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of hourly exceedances of legislated SO2 concentrations")
+
+# SO2 24 hr
+a %>% 
+	na.omit() %>%
+	filter(chem == "SO2") %>%
+	group_by(station) %>%
+	mutate(SO2.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>% 
+	na.omit() %>% 
+	summarize(Alert_ex = sum(SO2.24>2E2), Alarm_ex = sum(SO2.24>1E3), Emergy_ex = sum(SO2.24>1.8E3)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of 24-hour mean exceedances of legislated SO2 concentrations")
+
+# PM 2.5 hourly
+a %>% 
+	na.omit() %>%
+	filter(chem == "PM25") %>%
+	group_by(station) %>%
+	summarize(Alert_ex = sum(conc>1.5E2), Alarm_ex = sum(conc>2.5E2)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of hourly exceedances of legislated PM2.5 concentrations")
+
+# PM 2.5 in 24 hours
+a %>%
+	na.omit() %>%
+	group_by(station) %>%
+	filter(chem == "PM25") %>%
+	mutate(PM25.24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
+	na.omit() %>%
+	summarize(Alert_ex = sum(PM25.24>1.5E2), Alarm_ex = sum(PM25.24>2.5E2)) %>%
+	as.data.frame() %>%
+	pander(caption = "Number of 24-hour mean exceedances of legislated PM 2.5 concentrations")
+
+# readings for each contaminants
+#readings <- lapply(split(aq[, 3:12], aq$Type), function(x) #sum(!is.na(x)))
+
+# When does PM25 get higher than 250
+a %>% 
+	na.omit() %>%
+	filter(chem == "PM25") %>%
+	group_by(station) %>%
+	filter(conc > 250) %>%
+	ungroup() %>%
+	select(date) %>% as.vector() %>%
+	table()
+```
+
+```{r PLOTS}
+# make pm 25 24 hour max data
+PM25 <- a %>% 
+	na.omit() %>%
+	filter(chem == "PM25") %>%
+	mutate(PM25.24 = rollmax(x = conc, 24, align = "right", fill = NA),
+		   mean24 = rollmean(x = conc, 24, align = "right", fill = NA)) %>%
+	na.omit()
+
+# plot 1
+# ggplot histograms by station pm25
+ggplot(PM25, aes(x = PM25.24)) +
+	geom_histogram() +
+	geom_vline(xintercept = mean(PM25$PM25.24), col = "blue", lty = 2) +
+	geom_vline(xintercept = 150, col = "orange") +
+	geom_vline(xintercept = 250, col = "red") +
+	xlab("PM 2.5 concentration (24 hour max) in Quito") +
+	ylab("Number of Observations") +
+	facet_wrap(~station) +
+	ggtitle("PM2.5 Readings (24 hr max) in Quito. \n Blue line is mean concentration of all stations,orange is alert \n level of 150 ppm, red level is alarm level of 250 ppm") +
+	scale_y_log10() 
+
+# plot 2
+# scatterplot of pm25
+ggplot(PM25, aes(x = date, y = PM25.24, col = station)) +
+	geom_point(alpha = 0.8, size = 0.1) +
+	geom_hline(yintercept = mean(PM25$conc), col = "blue", lty = 2) +
+	geom_hline(yintercept = 150, col = "orange") +
+	geom_hline(yintercept = 250, col = "red") +
+	annotate("text", x = first(PM25$date),  y = mean(PM25$conc)+5, label = "Mean") +
+	annotate("text", x = first(PM25$date), y = 155, label = "Alert") +
+	annotate("text", x = first(PM25$date), y = 255, label = "Alarm") +
+	ggtitle("PM2.5 Readings (24 hr max) in Quito. Blue \n line is mean concentration of all stations,orange is alert \n level of 150 ppm, red level is alarm level of 250 ppm.") +
+	xlab("Date") +
+	ylab("PM 2.5 concentration (24 hour max)")
+
+#boxplot PM25 24 hour max
+ggplot(PM25, aes(factor(station), PM25.24)) +
+	   	geom_boxplot(fill = "gray") + 
+	geom_hline(yintercept = 150, col = "orange") + 
+	geom_hline(yintercept = 250, col = "red") +
+	ylab("PM 2.5 concentration (24 hour max)") +
+	ggtitle("PM2.5 Readings (24 hour max) in Quito. Orange is alert \n level of 150 ppm, red level is alarm level of 250 ppm.") + 
+	ylim(c(0,600))
+
+#boxplot PM25 24 hour mean
+ggplot(PM25, aes(factor(station), mean24)) +
+	   	geom_boxplot(fill = "gray") + 
+	geom_hline(yintercept = 150, col = "orange") + 
+	geom_hline(yintercept = 250, col = "red") +
+	ylab("PM 2.5 concentration (24 hour max)") +
+	ggtitle("PM2.5 Readings (24 hour mean) in Quito. Orange is alert \n level of 150 ppm, red level is alarm level of 250 ppm.") + 
+	ylim(c(0,600))
+
+# boxplot CO 8 hour mean
+CO <- a %>% 
+	na.omit() %>%
+	group_by(station) %>%
+	filter(chem == "CO") %>% 
+	mutate(CO.8 = rollmean(x = conc, 8, align = "right", fill = NA)) %>% 
+	na.omit()
+
+ggplot(CO, aes(factor(station), CO.8)) +
+	geom_boxplot(fill = "gray") + 
+	geom_hline(yintercept = 15000, col = "yellow") + 
+	geom_hline(yintercept = 30000, col = "orange") +
+	geom_hline(yintercept = 40000, col = "red") +
+	ylab("CO concentration 8 hour mean") +
+	xlab("Monitoring Station") +
+	ggtitle("CO Readings (8 hour max) in Quito. \n Yellow is alert of 15000 ug/m3, \n orange is alarm level of 30000 ug/m3, \n red level is emergency level of 40000 ug/m3.")
+```
+
+```{r}
+# When does CO.8 get higher than 40000
+	group_by(CO, station) %>%
+	filter(CO.8 > 40000) %>%
+	ungroup() %>%
+	select(date) %>% as.vector() %>%
+	table()
+```
+
+This is when CO was exceeded at Los Chillos. Looks like 3/17/14 to 3/21/14. Instrument error or event?
