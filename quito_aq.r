@@ -20,7 +20,7 @@ library(tidyr)
 library(ggplot2)
 
 ## READ IN DATA
-# setwd(file.choose())
+ setwd("~/Documents/r/projects/urban-epi/")
 
 aq <- read.table("air_files/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
 
@@ -345,17 +345,17 @@ El.Camal <- c( -0.25, -78.51,2840 )
 Centro <- c( -0.22, -78.51, 2820 )
 Guamani <- c(-0.3308333 , -78.551388, 3066)
 
-dat <- na.approx(data.frame(t(spaq[spaq$Type=="PM25" & spaq$yyyy.mm.dd.hh=="2013-Abr-5-5",3:9])))
+dat <- data.frame(t(spaq[spaq$Type=="PM25" & spaq$yyyy.mm.dd.hh=="2013-Abr-5-5",3:9]))
 test_sp <- SpatialPointsDataFrame(cbind(
                       c(Cotocollao[2],Carapungo[2], Belisario[2], Jipijapa[2], El.Camal[2], Centro[2], Guamani[2]),
                        c(Cotocollao[1],Carapungo[1],Belisario[1], Jipijapa[1],El.Camal[1], Centro[1], Guamani[1])),
                        data=dat)
 plot(test_sp)
-test_sp@data[is.na(test_sp@data)] <- mean(na.rm(test_sp@data))
+test_sp@data[is.na(test_sp@data)] <- mean(na.omit(test_sp@data))
 test_df <- as.data.frame(test_sp)
 names(test_df) <- c("X176934","x","y")
 
-x.range <- as.numeric(c(-78.6, -78.4))  # min/max longitude of the interpolation area
+x.range <- as.numeric(c(-78.8, -78.3))  # min/max longitude of the interpolation area
 y.range <- as.numeric(c(-0.5, 0))  # min/max latitude of the interpolation area
 
 grd <- expand.grid(x = seq(from = x.range[1], to = x.range[2], by = 0.01), 
@@ -367,17 +367,24 @@ plot(grd, cex = 1.5, col = "grey")
 points(test_df$y~test_df$x, pch = 1, col = "red", cex = 1)
 
 
-idw <- idw(formula = na.omit(X176934) ~ 1, locations = test_sp, 
+idw <- idw(formula = X176934) ~ 1, locations = test_sp, 
            newdata = grd)  # apply idw model for the data
 
 idw.output = as.data.frame(idw)  # output is defined as a data table
-names(idw.output)[1:3] <- c("long", "lat", "var1.pred")  # give names to the modelled variables
+names(idw.output)[1:3] <- c("lon", "lat", "var1.pred")  # give names to the modelled variables
 
 ggplot() + geom_tile(data = idw.output, aes(x = long, y = lat, fill = var1.pred)) + 
-  geom_point(data = test_df, aes(x = x, y = y), shape = 21, 
+    geom_point(data = test_df, aes(x = x, y = y), shape = 21, 
              colour = "red")
 
 #quito_contour <- readShapePoly("C:/.shp")
 #quito_contour <- fortify(quito_contour, region = "name")
 
+
+#ggplot() + geom_tile(data = idw.output, alpha = 0.8, aes(x = long, y = lat, 
+#                                                         fill = round(var1.pred, 0))) + scale_fill_gradient(low = "cyan", high = "orange") + 
+#  geom_path(data = quito_contour, aes(long, lat, group = group), colour = "grey") + 
+#  geom_point(data = test_df, aes(x = lon, y = lat), shape = 21, 
+#             colour = "red") + labs(fill = "PM 2.5 Concentration", title = "PM 2.5 Concentration in Quito, ")
+#
 
