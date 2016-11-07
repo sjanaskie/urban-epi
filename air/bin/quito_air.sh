@@ -6,12 +6,12 @@
 # NOTE: To re-run the download (in case of file corruption) run the 
 # following bash command to access the bin directory with download script.
 
-# bash ./download.sh 
+# bash bin/download.sh 
 
 
 # make new variable to use the current directory
 chmod 777 ./
-DIR=../air_data/raw
+DIR=air_data/raw
 rm -rf $DIR # remove previous attempts
 mkdir -p $DIR # remake the directory
 
@@ -69,6 +69,15 @@ rm raw/temp.tsv
 head air_quality.tsv 
 tail air_quality.tsv
 
+
+R
+
+aq <- read.table("air_quality.tsv", header=TRUE, sep="\t")
+
+aq[2800:2900,]
+q(save = "ask", status = 0, runLast = TRUE)
+
+EOF
 
 
 

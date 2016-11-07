@@ -19,10 +19,11 @@ library(animation)
 library(tidyr)
 library(ggplot2)
 
-## READ IN DATA
- setwd("~/Documents/r/projects/urban-epi/")
+## READ IN DATA from DataHub
 
-aq <- read.table("air_files/air_quality.tsv", header=TRUE, sep="\t", as.is=T, na.strings = "NA")
+aq <- read.table(paste0("https://datahub.io/dataset/c83708cc-0737-4f85-9bbd-04b254c60924",
+"/resource/5ce33a23-188f-4326-abe1-047a787f9df5/download/airquality.tsv"), 
+header=TRUE, sep="\t", as.is=T, na.strings = "NA")
 
 ## COLUMN VARIABLES TO CORRECT CLASS
 # date to posix
