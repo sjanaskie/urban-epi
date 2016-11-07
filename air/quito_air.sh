@@ -6,7 +6,7 @@
 # NOTE: To re-run the download (in case of file corruption) run the 
 # following bash command to access the bin directory with download script.
 
-# bash ./download.sh 
+# bash download.sh 
 
 
 # make new variable to use the current directory
@@ -35,7 +35,7 @@ for ANO in {2008..2015}
 	done
 done
 
-
+# rename PM 202.5.txt files without spaces or "."s
 for file in *PM%202.5.txt ; do mv "$file" "${file//%202.5/25}" ; done
 
 #We want to create a new file that has the following columns:
