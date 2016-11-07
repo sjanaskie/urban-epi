@@ -110,11 +110,22 @@ govt_data <- c("Census", "epa", "EPA, boston", "MassGIS", "American Community Su
                "Metropolitan Area Planning Council" , "California Air Resources Board (CARB)",
                "RESI, US EPA, TRI", "U.S. Energy Information", "USGS","City of Minneapolis")
                
-
-unique(grep(paste(govt_data,collapse="|"), ind$data_source, 
-                        ignore.case = T,value=TRUE))
-
-
-other_provider <- c("cdp","CDP","dataforcities.org")
+other_provider <- c("cdp","dataforcities.org")
                     
-bespoke <- c("self-reported", "survey", "Survey")
+bespoke <- c("self-reported", "survey", "interview","HFA National Progress","Hamududu&Killingtveit (2012)",
+             "et al.")
+
+length(grep(paste(govt_data,collapse="|"), 
+            ind$data_source, ignore.case = T,value=TRUE))
+
+length(grep(paste(unavailable,collapse="|"), 
+            ind$data_source, ignore.case = T,value=TRUE))
+
+length(grep(paste(bespoke,collapse="|"), 
+            ind$data_source, ignore.case = T,value=TRUE))
+
+length(grep(paste(other_provider,collapse="|"), 
+            ind$data_source, ignore.case = T,value=TRUE))
+
+
+
