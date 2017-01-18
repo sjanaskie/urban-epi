@@ -1,8 +1,5 @@
 
 library(pacman)
-library(knitr)
-install.packages("stargazer")
-library(stargazer)
 p_load(dplyr,magrittr,googlesheets,janitor, ggplot2, wesanderson)
 source("https://raw.githubusercontent.com/janhove/janhove.github.io/master/RCode/sortLvls.R")
 
@@ -16,6 +13,18 @@ ind <-  ind_raw %>%
  # mutate(hire_date = excel_numeric_to_date(hire_date),
  #        main_cert = use_first_valid_of(certification, certification_2)) %>%
  # select(-certification, -certification_2) # drop unwanted columns
+ind <- ind[!is.na(ind$indicator),]
+ind <- ind[!is.na(ind$primary_issue),]
+ind$unit_sc <- gsub("small","Small",ind$unit_sc,fixed=TRUE)
+ind$unit_of_analysis <- as.factor(ind$unit_of_analysis)
+ind$unit_sc <- as.factor(ind$unit_sc)
+ind$primary_issue[!is.na(ind$primary_issue) & ind$primary_issue=="Cross Sectoral"] <- "Green Economy"
+ind$unit_of_analysis[!is.na(ind$unit_of_analysis) & ind$unit_of_analysis=="City"] <- "City limits"
+ind$unit_of_analysis[!is.na(ind$unit_of_analysis) & ind$unit_of_analysis=="State"] <- "Regional"
+ind$unit_of_analysis[!is.na(ind$unit_of_analysis) & ind$unit_of_analysis=="Multi-city"] <- "Regional"
+ind$target_quality[!is.na(ind$target_quality) & ind$target_quality=="No target"] <- "No Target"
+ind$target_quality <- as.factor(ind$target_quality)
+
 
 glimpse(ind)
 ind$target_quality <- as.factor(ind$target_quality)
@@ -41,41 +50,80 @@ ind$primary_issue <- sortLvlsByN.fnc(ind$primary_issue)
 ind$primary_issue <- sortLvlsByN.fnc(ind$primary_issue)
 
 # Issue frequency
-ggplot(data=subset(ind, !is.na(primary_issue) ), aes(primary_issue, fill="red",na.rm=TRUE)) +
+ggplot(data=subset(ind, !is.na(primary_issue) ), 
+       aes(primary_issue, fill=target_quality,na.rm=TRUE)) +
   geom_bar() + coord_flip() + 
   labs(list(title="Equity by Primary Issue",x="Primary Issue",y="Count")) + 
-  theme_minimal() +
-  #scale_fill_brewer(type = "qual", palette = 5, direction=-1) + 
+  theme_minimal() #+
+  scale_fill_brewer(type = "qual", palette = , direction=-1)  +
   theme(legend.position="none")
-ggsave("frequency.pdf")
+#ggsave("frequency.pdf")
 
 # Equity by primary issue
-ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(equity)), aes(primary_issue, fill=equity, na.rm=TRUE)) +
-  geom_bar(position="fill") + coord_flip() +
-  labs(list(title="Equity Indicators by Primary Issue",x="Primary Issue",y="Percent")) + 
-  theme_minimal() +
-  scale_fill_brewer(type = "seq", palette = 5, direction = -1)
+ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(equity)), 
+       aes(primary_issue, fill=equity, na.rm=TRUE)) +
+  geom_bar() + coord_flip() +
+  labs(list(#title="Equity Indicators by Primary Issue",
+            x="Primary Issue",y="Count")) + 
+  theme_minimal() 
 ggsave("equity.pdf")
 
 # Quality of Targets by Primary Issue
-tgt_order <- c(6,3, 2, 1, 4)
+tgt_order <- c(4,1,2,3,5)
 ind$target_quality <- sortLvls.fnc(ind$target_quality, tgt_order)
-ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(target_quality)), aes(primary_issue, fill=target_quality, na.rm=TRUE)) +
-  geom_bar(position="fill") + coord_flip() + 
-  labs(list(title="Quality of Targets by Primary Issue",x="Primary Issue",y="Percent")) + 
-  theme_minimal() +
-  scale_fill_brewer(type = "seq", palette = 5, direction = -1)
-ggsave("targets.pdf")
+ind$primary_issue <- 
 
+ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(target_quality)), 
+       aes(primary_issue, fill=target_quality, na.rm=TRUE)) +
+  geom_bar() + coord_flip() + 
+  labs(list(title="Quality of Targets by Primary Issue", x="Primary Issue", y="Percent")) + 
+  theme_minimal() 
+  #scale_fill_brewer(type = "qual", palette = 2)
+#ggsave("targets.pdf")
 
 # Cross-sectoral Issues
-ind<-mutate(ind,cross_sector= ifelse(is.na(secondary),"No","Yes"))
-ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(target_quality)), aes(primary_issue, fill=cross_sector, na.rm=TRUE)) +
+ind <- mutate(ind,cross_sector= ifelse(is.na(secondary),"No","Yes"))
+ggplot(data=subset(ind, !is.na(primary_issue) & !is.na(target_quality)), 
+       aes(primary_issue, fill=cross_sector, na.rm=TRUE)) +
   geom_bar(position="fill") + coord_flip() + 
   labs(list(title="Cross-sectoral Issues",x="Primary Issue",y="Percent")) + 
   theme_minimal() +
   scale_fill_brewer(type = "seq", palette = 5, direction = -1)
-ggsave("cross-sector.pdf")
+#ggsave("cross-sector.pdf")
+
+# Unit of analysis
+unit_order <- c(6,4,1,2,5,7,3)
+ind$unit_of_analysis <- sortLvls.fnc(ind$unit_of_analysis, unit_order)
+ggplot(data=subset(ind, !is.na(unit_of_analysis) & !is.na(equity)), 
+       aes(unit_of_analysis, fill=equity, na.rm=TRUE)) +
+  geom_bar() + coord_flip() + 
+  labs(list(title="Unit of Analysis and Equity",x="Unit of Analysis",y="Count")) + 
+  theme_minimal()
+#ggsave("unit_of_analysis.pdf")
+
+glimpse(ind)
+
+
+mutate(ind, method.type = 
+        ifelse(grepl("Single number as reported by WDI",methodology), 999,
+        ifelse(grepl("Not specified",methodology), 999,
+        ifelse(grepl("Self-reported by countries",methodology), 999,
+        ifelse(grepl("Methodology of collecting data was not mentioned.",methodology), 999,
+        ifelse(grepl("Overlaying to sets of data visualizations.",methodology), 999,
+        ifelse(grepl("self-reported",methodology), 999, "PROCESS" ) )))))) 
+ind$method.type
+ind$methodology
+
+
+table(na.omit(ind$unit_of_analysis))
+table(na.omit(ind$unit_sc))
+
+crosstab(ind$unit_sc,ind$equity)
+crosstab(ind$unit_of_analysis,ind$equity)
+
+
+na.omit(ind$indicator_description[ind$primary_issue=="Transportation"])
+#ggsave("cross-sector.pdf")
 
 
 ############################################

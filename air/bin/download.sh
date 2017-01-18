@@ -1,9 +1,10 @@
 
 # make new variable to use the current directory
-DIR=./air_files
-
+chmod 777 ./
+DIR=../air_files
 rm -rf $DIR # remove previous attempts
 mkdir $DIR # remake the directory
+
 cd $DIR # move into the new directory
 
 # make two array variables with the months and elements

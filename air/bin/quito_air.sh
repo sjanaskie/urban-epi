@@ -11,31 +11,9 @@
 
 # make new variable to use the current directory
 chmod 777 ./
-DIR=air_data/raw
-rm -rf $DIR # remove previous attempts
-mkdir -p $DIR # remake the directory
+DIR=../air_files
 
-cd $DIR # move into the new directory
-
-# make two array variables with the months and elements
-declare -a month=("Enero" "Febrero" "Marzo" "Abril" "Mayo" "Junio" "Julio" "Agosto" "Septiembre" "Octubre" "Noviembre" "Diciembre")
-declare -a element=("SO2" "CO" "PM%202.5" "O3")
-
-# loop through the year
-for ANO in {2008..2015} 
-	do echo '#######################'
-	# loop through the month
-	for MON in "${month[@]}"
-		do echo $ANO $MON
-			# loop through the elements
-			for ELE in "${element[@]}"
-			# rename the files by year, month, and element instead of month, year, element
-			do wget -O $ANO'_'$MON'_'$ELE'.txt' 'http://redmonitoreo.quitoambiente.gob.ec/file/'$MON$ANO$ELE'.CSV'
-		done
-	done
-done
-
-
+cd $DIR
 for file in *PM%202.5.txt ; do mv "$file" "${file//%202.5/25}" ; done
 
 #We want to create a new file that has the following columns:
@@ -51,7 +29,7 @@ awk ' BEGIN { FS=";" }
         {  print "yyyy.mm.dd.hh\t" "Type\t" "Cotocollao\t" "Carapungo\t" "Belisario\t" "Jipijapa\t" "El Camal\t" "Centro\t" "Guamani\t" "Tumbaco\t" "Los Chillos\t" "El Condado\t" "Turubamba\t" "Chillogallo" } 
         else { split(FILENAME,a,"_"); split(a[3],b,".");
             if (FNR>1) print substr(FILENAME,0,4)"-"substr(FILENAME,6,3)"-"$1" "$2 ":00\t" b[1]"\t" $3"\t" $4"\t" $5"\t" $6"\t" $7"\t" $8"\t" $9"\t" $10"\t" $11"\t" $12"\t" $13"\t" $14 }
-    }' *.txt > temp.tsv
+    }' *.txt > ../air_data/temp.tsv
 
 cd ../
 awk '{ gsub("Ene", "01");gsub("Feb", "02"); gsub("Mar", "03"); gsub("Abr","04"); gsub("May", "05"); 
@@ -59,25 +37,16 @@ gsub("Jun", "06");gsub("Jul", "07"); gsub("Ago", "09"); gsub("Oct", "10"); gsub(
 gsub("Dic", "12"); gsub("-1 ","-01 ");gsub("-2 ","-02 ");gsub("-3 ","-03 "); gsub("-4 ","-04 ");
 gsub("-5 ","-05 "); gsub("-6 ","-06 "); gsub("-7 ","-07 "); gsub("-8 ","-08 "); gsub("-9 ","-09 ");
 gsub(" 0:"," 00:"); gsub(" 1:"," 01:"); gsub(" 2:"," 02:"); gsub(" 3:"," 03:"); gsub(" 4:"," 04:");
-gsub(" 5:"," 05:"); gsub(" 6:"," 06:"); gsub(" 7:"," 07:"); gsub(" 8:"," 08:"); gsub(" 9:"," 09:");  print }' raw/temp.tsv > air_quality.tsv
+gsub(" 5:"," 05:"); gsub(" 6:"," 06:"); gsub(" 7:"," 07:"); gsub(" 8:"," 08:"); gsub(" 9:"," 09:");  print }' air_data/temp.tsv > air_data/air_quality.tsv
 
-rm raw/temp.tsv
+rm air_data/temp.tsv
 
 #iconv air_quality.tsv -f iso-8859-1 -t UTF-8 -c | 
 
 #take a look at the tail to make sure the type of reading came through
-head air_quality.tsv 
-tail air_quality.tsv
+head air_data/air_quality.tsv 
+tail air_data/air_quality.tsv
 
-
-R
-
-aq <- read.table("air_quality.tsv", header=TRUE, sep="\t")
-
-aq[2800:2900,]
-q(save = "ask", status = 0, runLast = TRUE)
-
-EOF
 
 
 
