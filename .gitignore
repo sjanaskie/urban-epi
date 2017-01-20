@@ -45,4 +45,11 @@ Thumbs.db
 # Custom #
 ##########
 air_files/
-land_cover/
+*.tif
+*.vrt
+*.gz
+*.kate-swp
+*.jpg
+
+
+
