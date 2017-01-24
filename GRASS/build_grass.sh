@@ -56,7 +56,9 @@ gdalwarp  -t_srs EPSG:4326  -s_srs EPSG:4326  quito.tif quito_proj.tif
 
 # make a new location
 rm -rf $GRASSDB/quito 
-grass70 -text  -c  -c    quito_proj.tif    quito    $GRASS/epi
+grass70 -text  -c  -c    quito_proj.tif    quito    $GRASSDB
+g.extension r.area
+
 
 # first rename everything into urban/not urban.
 # urban land use is categorized as 13. Anything above or below
@@ -65,38 +67,55 @@ grass70 -text  -c  -c    quito_proj.tif    quito    $GRASS/epi
 #gdal_calc.py -A C:temp\raster.tif --outfile=result.tiff --calc="0*(A<3)" --calc="1*(A>3)"
 
 
-r.in.gdal input=quito.tif  output=quito
+r.in.gdal     input=quito.tif     output=quito
 
-r.recode input=quito output=quito_urban rules=- << EOF
-0:0:2
-1:12:0
-14:*:0
-13:13:1
+r.reclass   input=quito    output=quito_urban   --overwrite rules=- << EOF
+13  = 0 urban
+*   = NULL
 EOF
 
 
 
 # clump the contiguous land uses together with the diagonals included.
-r.clump -dg quito out=urban_lc
-
-g.gui
-
-determine the 
-
-
-pkstat -
-
-GHSL JRC
-
-grass
-r.grow.distance in grass
+r.clump   -d   --overwrite   input=quito_urban   output=urban_lc
 
 
 
-Wiki tutorials - grass create location - 
+#calculate the area of each clump
+r.area input=urban_lc  output=quito_lg_clumps   --overwrite   lesser=8 #what is right threshold?
 
-UHI in terms of the impact of density on land surface temperature
-Global human settlements layer
+
+r.report urban_lc units=h
+
+
+r.li.padrange input=quito_lg_clumps config=biggest_patch output=parent_patch --overwrite
+#r.li.patchnum input=name config=name output=name [--overwrite] [--help] [--verbose] [--quiet] [--ui] 
+
+#assign clumps with area > 4km^2 to 1, the rest to 0
+
+#Make a buffer of 20000 m
+r.grow.distance -m   input=quito_lg_clumps     distance=meters_from_urban_area  metric=geodesic    --overwrite
+#r.grow.distance [-mn] input=name [distance=name] [value=name] [metric=string] [--overwrite] [--help] [--verbose] [--quiet] [--ui] 
+
+#intersect the quito_urban file with the buffered tif
+
+
+#if the area is bigger than 2 km sq,
+r.reclass   input=meters_from_urban_area   output=quito_agglomeration --overwrite rules=- << EOF
+0 thru 2000 = 1 urban
+*   = NULL
+EOF
+
+
+
+
+#GHSL JRC
+
+#grass
+#r.grow.distance in grass
+
+
+#Global human settlements layer
 
 
 
