@@ -35,10 +35,16 @@ TMP=~/projects/urban-epi/GRASS/tmp/
 #####################################################
 # Here begins the GRASS database setup.
 
+
+
+# Put global files in PERMANENT
+
+
 # First, if you want to start over:
-cd $DIR && rm -rf $GRASSDB 
+cd $DIR && rm -rf $GRASSDB
 
 # Creat a vrt from all the tifs
+# can import the full dataset
 gdalbuildvrt -te -79.5 -1 -77.5 1 -overwrite $TMP/output.vrt $TMP/glcf/*.tif
 
 # Use gdal to make a tif of the study area- in this case, Quito.
@@ -52,11 +58,28 @@ cp $TMP/quito.tif $GRASSDB/quito.tif
 
 
 # Write out the projection of the study area
-gdalwarp  -t_srs EPSG:4326  -s_srs EPSG:4326  quito.tif quito_proj.tif
+gdalwarp  -t_srs   EPSG:4326  -s_srs EPSG:4326  quito.tif quito_proj.tif
 
 # make a new location
-rm -rf $GRASSDB/quito 
+rm -rf $GRASSDB/quito
+# Create location with the full earth cover
 grass70 -text  -c  -c    quito_proj.tif    quito    $GRASSDB
+
+
+######################################################################
+#r.in.gdal for all global rasters
+
+# Create new MAPSET and enter into the mapset
+
+
+#g.region set each city to a region
+# this up in a loop for each city
+
+#Quito
+
+#Tokyo
+#...
+
 g.extension r.area
 
 
@@ -67,6 +90,8 @@ g.extension r.area
 #gdal_calc.py -A C:temp\raster.tif --outfile=result.tiff --calc="0*(A<3)" --calc="1*(A>3)"
 
 
+
+# These go in permanent. Global data sets get read in like this.
 r.in.gdal     input=quito.tif     output=quito
 
 r.reclass   input=quito    output=quito_urban   --overwrite rules=- << EOF
@@ -84,14 +109,14 @@ r.clump   -d   --overwrite   input=quito_urban   output=urban_lc
 #calculate the area of each clump
 r.area input=urban_lc  output=quito_lg_clumps   --overwrite   lesser=8 #what is right threshold?
 
+r.mapcalc if ( map == $BIG  , 1 , 0) 
 
-r.report urban_lc units=h
+r.report urban_lc units=c
 
+#r.li.padrange input=quito_lg_clumps config=mov_window_km output=parent_patch --overwrite
+#r.li.patchnum input=quito_lg_clumps config=mov_window_km output=quito_patchnum --overwrite 
 
-r.li.padrange input=quito_lg_clumps config=biggest_patch output=parent_patch --overwrite
-#r.li.patchnum input=name config=name output=name [--overwrite] [--help] [--verbose] [--quiet] [--ui] 
-
-#assign clumps with area > 4km^2 to 1, the rest to 0
+# assign clumps with area > 4km^2 to 1, the rest to 0
 
 #Make a buffer of 20000 m
 r.grow.distance -m   input=quito_lg_clumps     distance=meters_from_urban_area  metric=geodesic    --overwrite
@@ -108,6 +133,27 @@ EOF
 
 
 
+r.mask input=    
+
+r.mapcalc  urban_area_mask = 
+
+
+
+gdalwarp -te xmin ymin xmax ymax -tr 3 3 -r bilinear A_state_30m.tif C_county_3m.tif
+
+
+
+
+
+#gdaltindex clipper.shp clipper.tif
+#gdalwarp -cutline clipper.shp -crop_to_cutline input.tif output.tif
+
+
+g.gui
+
+
+
+d.rast map=name values=value 
 
 #GHSL JRC
 
