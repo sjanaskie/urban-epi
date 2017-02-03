@@ -7,165 +7,115 @@ TMP=~/projects/urban-epi/GRASS/tmp/
 
 #################################################################################
 # Download all the files
-
-#rm -rf $TMP && mkdir $TMP && cd $TMP
-#wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/* 
-#cd $DIR
-
-# Gather them into one folder called 'gclf'
-
-#rm -rf $TMP/glcf && mkdir $TMP/glcf
-#cp $TMP/ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/MCD12Q1_V51_LC1.2012*/*.tif.gz $TMP/glcf
-
-# Unzip them from .gz format.
-
-#cd $TMP/glcf && find . -name '*.gz' -exec gunzip '{}' \;
-#cd $DIR
-
-# Uncomment the above lines to download the files again.
-#################################################################################################
-
-# Download shapefile with urban areas into new directory.
-# For now, I am waiting to include this step, bounding boxes defined manually.
-#mkdir ../ne_10m_urban_areas && cd ne_10m_urban_areas
-#wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_urban_areas.zip
+#bash ./download_data.sh
+#################################################################################
 
 
 
-#####################################################
+
+#################################################################################
 # Here begins the GRASS database setup.
 
-
-
-# Put global files in PERMANENT
-
-
 # First, if you want to start over:
-cd $DIR && rm -rf $GRASSDB
+cd   $DIR   &&   rm   -rf  $GRASSDB
 
-# Creat a vrt from all the tifs
-# can import the full dataset
-gdalbuildvrt -te -79.5 -1 -77.5 1 -overwrite $TMP/output.vrt $TMP/glcf/*.tif
 
-# Use gdal to make a tif of the study area- in this case, Quito.
-gdal_translate -of GTIFF  $TMP/output.vrt  $TMP/quito.tif
-
-# Create a new geoTIFF using a bounding box and the VRT.
 # To automate this in the future, create separate tiffs from the VRT in the 
 # above line using an input shapefile.
 mkdir $GRASSDB && cd $GRASSDB
-cp $TMP/quito.tif $GRASSDB/quito.tif
+
+# Move all data files to GrassDB so they are accessible to Grass. 
+gdalbuildvrt  -overwrite   $GRASSDB/landuse_cover.vrt    $TMP/glcf/*.tif                                 #Land Cover
+cp $TMP/treecover/Hansen_GFC2015_gain_00N_080W.tif $GRASSDB                # Treecover gain quito
+cp $TMP/treecover/Hansen_GFC2015_loss_00N_080W.tif $GRASSDB                # Treecover loss quito
+cp $TMP/pop_density/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif  $GRASSDB   #Population Density
 
 
-# Write out the projection of the study area
-gdalwarp  -t_srs   EPSG:4326  -s_srs EPSG:4326  quito.tif quito_proj.tif
+# Use gdal to make a tif of the 
+#gdal_translate  -of  GTIFF   $TMP/landuse_cover.vrt   $TMP/landuse_cover.tif
 
-# make a new location
-rm -rf $GRASSDB/quito
+
 # Create location with the full earth cover
-grass70 -text  -c  -c    quito_proj.tif    quito    $GRASSDB
+grass70 -text  -c  -c   $GRASSDB/landuse_cover.vrt    uepi    $GRASSDB
+g.extension r.area
 
 
 ######################################################################
 #r.in.gdal for all global rasters
 
-# Create new MAPSET and enter into the mapset
+# These go in permanent. Global data sets get read in like this.
+r.in.gdal     input=landuse_cover.vrt     output=land_cover
+r.in.gdal     input=gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   output=pop_density_2015
+r.in.gdal     input=Hansen_GFC2015_gain_00N_080W.tif   output=quito_tree_gain
+r.in.gdal     input=Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
 
+
+
+#######################################################################
+###                START WORKING WITH GRASS DATABASE                ###
+#######################################################################
+
+# Create new MAPSET and enter into the mapset
+g.mapset -c mapset=quito
 
 #g.region set each city to a region
 # this up in a loop for each city
-
+# for (region in shapefile g.region=region)
+g.region  n=1 s=-1 e=-77 w=-79 --o  # region=quito
 #Quito
-
 #Tokyo
 #...
 
-g.extension r.area
-
-
-# first rename everything into urban/not urban.
-# urban land use is categorized as 13. Anything above or below
-# 13 is recoded to 0, urban (13) is recoded to 1
-
-#gdal_calc.py -A C:temp\raster.tif --outfile=result.tiff --calc="0*(A<3)" --calc="1*(A>3)"
-
-
-
-# These go in permanent. Global data sets get read in like this.
-r.in.gdal     input=quito.tif     output=quito
-
-r.reclass   input=quito    output=quito_urban   --overwrite rules=- << EOF
+r.reclass   input=land_cover    output=quito_urban   --overwrite rules=- << EOF
 13  = 0 urban
 *   = NULL
 EOF
 
-
-
 # clump the contiguous land uses together with the diagonals included.
 r.clump   -d   --overwrite   input=quito_urban   output=urban_lc
-
-
 
 #calculate the area of each clump
 r.area input=urban_lc  output=quito_lg_clumps   --overwrite   lesser=8 #what is right threshold?
 
-r.mapcalc if ( map == $BIG  , 1 , 0) 
-
-r.report urban_lc units=c
-
-#r.li.padrange input=quito_lg_clumps config=mov_window_km output=parent_patch --overwrite
-#r.li.patchnum input=quito_lg_clumps config=mov_window_km output=quito_patchnum --overwrite 
-
 # assign clumps with area > 4km^2 to 1, the rest to 0
-
-#Make a buffer of 20000 m
+# Make a buffer of 20000 m
 r.grow.distance -m   input=quito_lg_clumps     distance=meters_from_urban_area  metric=geodesic    --overwrite
-#r.grow.distance [-mn] input=name [distance=name] [value=name] [metric=string] [--overwrite] [--help] [--verbose] [--quiet] [--ui] 
-
-#intersect the quito_urban file with the buffered tif
-
-
 #if the area is bigger than 2 km sq,
-r.reclass   input=meters_from_urban_area   output=quito_agglomeration --overwrite rules=- << EOF
+r.reclass   input=meters_from_urban_area   output=urban_agglomeration --overwrite rules=- << EOF
 0 thru 2000 = 1 urban
 *   = NULL
 EOF
 
+# clump the contiguous land uses together with the diagonals included.
+r.clump   -d   --overwrite   input=urban_agglomeration   output=urban_agglomeration
+BIG=$(r.report -n urban_agglomeration units=c sort=asc | awk -F "|" '{ print $2 }' | tail -n 4 | head -n 1)
+
+#intersect the quito_urban file with the buffered tif
+r.mapcalc  "urban_mask = if(urban_agglomeration==$BIG,1,null())" --overwrite
+d.mon wx0
+d.rast urban_mask
+d.mon wx0
+d.rast urban_lc
+
+### Improvement: instead of mask, select all intersecting clumps and grab them.
+r.mask raster=urban_mask
+r.mapcalc "agglomeration_clumps = urban_lc" --overwrite
+r.reclass   input=agglomeration_clumps   output=quito_agglomeration   --overwrite rules=- << EOF
+* = 1 urban
+EOF
+r.mask -r
+d.mon wx0
+d.rast quito_agglomeration
+
+r.to.vect -s input=quito_agglomeration  output=quito_agglomeration type=area
+
+r.li.patchnum input=quito_agglomeration config=urban_patches output=patch_index --overwrite 
+N= ($(awk -F "|"  '{ print $2 }' ~/.grass7/r.li/output/patch_index ))
+
+# assign L to be a vector of all areas
+L=$(r.report -n urban_agglomeration units=k | awk -F "|" '{ print $4 }' | tail -n 23)
 
 
-r.mask input=    
-
-r.mapcalc  urban_area_mask = 
-
-
-
-gdalwarp -te xmin ymin xmax ymax -tr 3 3 -r bilinear A_state_30m.tif C_county_3m.tif
-
-
-
-
-
-#gdaltindex clipper.shp clipper.tif
-#gdalwarp -cutline clipper.shp -crop_to_cutline input.tif output.tif
-
-
-g.gui
-
-
-
-d.rast map=name values=value 
-
-#GHSL JRC
-
-#grass
-#r.grow.distance in grass
-
-
-#Global human settlements layer
-
-
-
-
-
+r.to.vect -s input=agglomeration_clumps  output=quito_vect type=area
 
 
