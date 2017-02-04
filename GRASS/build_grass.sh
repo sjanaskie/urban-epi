@@ -2,42 +2,48 @@
 # MCD12 is the code for land cover data from NASA.
 
 DIR=~/projects/urban-epi/GRASS/
-GRASSDB=~/grassdb/
 TMP=~/projects/urban-epi/GRASS/tmp/
+OSMNX=~/projects/urban-epi/scrpits/data/
+
+GRASSDB=~/grassdb/
+PERM=~/grassdb/uepi/
+RAW=~/grassdb/raw_data/
 
 #################################################################################
 # Download all the files
 #bash ./download_data.sh
 #################################################################################
 
-
-
-
 #################################################################################
 # Here begins the GRASS database setup.
 
-# First, if you want to start over:
-cd   $DIR   &&   rm   -rf  $GRASSDB
+# Optional start over:
+#cd   $DIR   &&   rm   -rf  $GRASSDB
 
 
 # To automate this in the future, create separate tiffs from the VRT in the 
 # above line using an input shapefile.
-mkdir $GRASSDB && cd $GRASSDB
-
-# Move all data files to GrassDB so they are accessible to Grass. 
-gdalbuildvrt  -overwrite   $GRASSDB/landuse_cover.vrt    $TMP/glcf/*.tif                                 #Land Cover
-cp $TMP/treecover/Hansen_GFC2015_gain_00N_080W.tif $GRASSDB                # Treecover gain quito
-cp $TMP/treecover/Hansen_GFC2015_loss_00N_080W.tif $GRASSDB                # Treecover loss quito
-cp $TMP/pop_density/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif  $GRASSDB   #Population Density
+#mkdir $GRASSDB
+cd $GRASSDB
+mkdir $RAW
+# make vrt to create global location
+gdalbuildvrt  -overwrite   $RAW/landuse_cover.vrt    $TMP/glcf/*.tif                                 #Land Cover
 
 
-# Use gdal to make a tif of the 
+# Use gdal to make a tif of the landcover layer.
+# CORECTION: This is done through g.region below.
 #gdal_translate  -of  GTIFF   $TMP/landuse_cover.vrt   $TMP/landuse_cover.tif
 
-
 # Create location with the full earth cover
-grass70 -text  -c  -c   $GRASSDB/landuse_cover.vrt    uepi    $GRASSDB
-g.extension r.area
+grass70 -text  -c  -c   $RAW/landuse_cover.vrt    uepi    $GRASSDB
+g.extension r.area  #add r.area extension to grass7
+
+# Read in data to /PERMANENT mapset.
+
+cp $TMP/treecover/Hansen_GFC2015_gain_00N_080W.tif   $RAW/Hansen_GFC2015_gain_00N_080W.tif              # Treecover gain quito
+cp $TMP/treecover/Hansen_GFC2015_loss_00N_080W.tif   $RAW/Hansen_GFC2015_loss_00N_080W.tif               # Treecover loss quito
+cp $TMP/pop_density/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif;
+$RAW/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   #Population Density
 
 
 ######################################################################
@@ -116,6 +122,7 @@ N= ($(awk -F "|"  '{ print $2 }' ~/.grass7/r.li/output/patch_index ))
 L=$(r.report -n urban_agglomeration units=k | awk -F "|" '{ print $4 }' | tail -n 23)
 
 
-r.to.vect -s input=agglomeration_clumps  output=quito_vect type=area
+r.to.vect -s input=agglomeration_clumps  output=urban_area type=area
+
 
 
