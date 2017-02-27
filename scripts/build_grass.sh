@@ -1,17 +1,21 @@
+
+
+#bash ../bin/directory_tree.sh
+
+DIR=~/projects/urban-epi
+
+GRASSDB=~/grassdb/
+RAW=~/grassdb/raw
+TMP=$RAW/tmp/
+
+
 # This bash script downloads all land cover data fromftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01
 # MCD12 is the code for land cover data from NASA.
 
-DIR=~/projects/urban-epi/GRASS/
-TMP=~/projects/urban-epi/GRASS/tmp/
-ROADS=~/projects/urban-epi/data/roads
-
-GRASSDB=~/grassdb/
-PERM=~/grassdb/uepi/
-RAW=~/grassdb/raw_data/
 
 #################################################################################
 # Download all the files
-bash ./download_data.sh
+#bash ./download_data.sh
 #################################################################################
 
 #################################################################################
@@ -25,7 +29,7 @@ bash ./download_data.sh
 # above line using an input shapefile.
 #mkdir $GRASSDB
 cd $GRASSDB
-mkdir $RAW
+mkdir -p $RAW
 # make vrt to create global location
 gdalbuildvrt  -overwrite   $RAW/landuse_cover.vrt    $TMP/glcf/*.tif                                 #Land Cover
 

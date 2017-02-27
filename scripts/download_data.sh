@@ -1,15 +1,15 @@
 
 # This bash script downloads all data for the Urban EPI from the source, as well as setting up the proper directory structure.
 
+DIR=~/projects/urban-epi
 
-DIR=~/projects/urban-epi/GRASS/
 GRASSDB=~/grassdb/
-TMP=~/projects/urban-epi/GRASS/tmp/
-
+RAW=~/grassdb/raw
+TMP=$RAW/tmp/
 
 # land cover data fromftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01
 # MCD12 is the code for land cover data from NASA.
-rm -rf $TMP && mkdir $TMP && cd $TMP
+rm -rf $TMP && mkdir -p $TMP && cd $TMP
 wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/* 
 cd $DIR
 
