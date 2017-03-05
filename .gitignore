@@ -50,6 +50,6 @@ air_files/
 *.gz
 *.kate-swp
 *.jpg
-data/*
+**/data/**
 
 

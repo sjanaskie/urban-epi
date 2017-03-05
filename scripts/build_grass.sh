@@ -1,5 +1,3 @@
-
-
 #bash ../bin/directory_tree.sh
 
 DIR=~/projects/urban-epi
@@ -8,11 +6,6 @@ GRASSDB=~/grassdb/
 RAW=~/grassdb/raw
 TMP=$RAW/tmp/
 
-
-# This bash script downloads all land cover data fromftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01
-# MCD12 is the code for land cover data from NASA.
-
-
 #################################################################################
 # Download all the files
 #bash ./download_data.sh
@@ -20,44 +13,19 @@ TMP=$RAW/tmp/
 
 #################################################################################
 # Here begins the GRASS database setup.
-
-# Optional start over:
-#cd   $DIR   &&   rm   -rf  $GRASSDB
-
-
-# To automate this in the future, create separate tiffs from the VRT in the 
-# above line using an input shapefile.
-#mkdir $GRASSDB
 cd $GRASSDB
 mkdir -p $RAW
 # make vrt to create global location
-gdalbuildvrt  -overwrite   $RAW/landuse_cover.vrt    $TMP/glcf/*.tif                                 #Land Cover
-
-
-# Use gdal to make a tif of the landcover layer.
-# CORECTION: This is done through g.region below.
-#gdal_translate  -of  GTIFF   $TMP/landuse_cover.vrt   $TMP/landuse_cover.tif
-
-# Create location with the full earth cover
-grass70 -text  -c  -c   $RAW/landuse_cover.vrt    uepi    $GRASSDB
+gdalbuildvrt  -overwrite   $RAW/glcf/landuse_cover.vrt    $RAW/glcf/*.tif                                 #Land Cover
+grass70 -text  -c  -c   $RAW/landuse_cover.vrt    global_urban_epi    $GRASSDB
 g.extension r.area  #add r.area extension to grass7
 
-# Read in data to /PERMANENT mapset.
-
-cp $TMP/treecover/Hansen_GFC2015_gain_00N_080W.tif   $RAW/Hansen_GFC2015_gain_00N_080W.tif              # Treecover gain quito
-cp $TMP/treecover/Hansen_GFC2015_loss_00N_080W.tif   $RAW/Hansen_GFC2015_loss_00N_080W.tif               # Treecover loss quito
-cp $TMP/pop_density/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif;
-$RAW/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   #Population Density
-
-
 ######################################################################
-#r.in.gdal for all global rasters
-
-# These go in permanent. Global data sets get read in like this.
-r.in.gdal     input=landuse_cover.vrt     output=land_cover
-r.in.gdal     input=gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   output=pop_density_2015
-r.in.gdal     input=Hansen_GFC2015_gain_00N_080W.tif   output=quito_tree_gain
-r.in.gdal     input=Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
+#r.in.gdal for all global rasters to PERMANENT mapset. 
+r.in.gdal     input=raw/landuse_cover.vrt     output=land_cover
+r.in.gdal     input=raw/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   output=pop_density_2015
+#r.in.gdal     input=raw/Hansen_GFC2015_gain_00N_080W.tif   output=tree_gain
+#r.in.gdal     input=raw/Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
 
 
 
@@ -66,6 +34,7 @@ r.in.gdal     input=Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
 #######################################################################
 
 # Create new MAPSET and enter into the mapset
+
 g.mapset -c mapset=quito
 
 #g.region set each city to a region
@@ -129,4 +98,4 @@ L=$(r.report -n urban_agglomeration units=k | awk -F "|" '{ print $4 }' | tail -
 r.to.vect -s input=agglomeration_clumps  output=urban_area type=area
 
 
-
+#exit n
