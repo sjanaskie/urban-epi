@@ -1,6 +1,6 @@
 #bash ../bin/directory_tree.sh
 
-DIR=~/projects/urban-epi
+DIR=~/projects/urban_epi
 
 GRASSDB=~/grassdb/
 RAW=~/grassdb/raw
