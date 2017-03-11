@@ -18,16 +18,16 @@ Importantly, the repo is intended to be cloned into a parent directory.
 `git clone http://github.com/ryanthomas/urban-epi.git`
 
 The setup script takes one of three arguements: 
-    - -dir : To set up the directpry structure,
-    - -data : To download the data, and
-    - -grass : To set up the grass database.
-It is necessary that these be run one at a time. Future developments may allow them to be run together.
-`source/bash/setup.sh -dir`
+- `-dir` : To set up the directpry structure,
+- `-data` : To download the data, and
+- `-grass` : To set up the grass database.
+It is necessary that these be run one at a time. Future developments may allow them to be run together.</br>
+`source/bash/setup.sh -dir`</br>
 This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above).
 
-`source/bash/setup.sh -data` 
+`source/bash/setup.sh -data` </br>
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
 
-`source/bash/setup.sh -grass` 
+`source/bash/setup.sh -grass` </br>
 This sets up the grassdatabase with mapsets for every city stored in carto_cities directory.
 
