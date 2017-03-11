@@ -6,8 +6,8 @@
 # data goes in sibling directories.
 
 # Absolute path to parent directory
-echo "
-Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone. 
+echo
+echo "Please enter the absolute path to the parent directory. You may start from home directory with . Hint: This is the directory where you ran git clone. 
 WARNING: It must end with a slash ('/').
 "
 
@@ -24,21 +24,21 @@ WARNING: It must end with a slash ('/').
 fi
 
 # Top level directories. These don't exist yet.
-DATA=$DIR/data/
-IND=$DIR/indicators
+export DATA=$DIR/data/ # $1
+export IND=$DIR/indicators # $2
 mkdir -p $DATA # make new directories
 mkdir -p $IND 
 
 # Location of bash scripts
-SH=$DIR/source/bash/
+export SH=$DIR/source/bash/ # $3
 
 # Grass DB directories
-GRASSDB=$DIR/grassdb/
+export GRASSDB=$DIR/grassdb/ # $4
 
 # Raw data directories
-RAS=$DIR/data/raster    # all and only raster data goes here
-VEC=$DIR/data/vector    # all and only vector data goes here.
-TMP=$DIR/data/tmp/      # used to download and unzip files.
+export RAS=$DIR/data/raster    # $5 all and only raster data goes here
+export VEC=$DIR/data/vector    # $6 all and only vector data goes here.
+export TMP=$DIR/data/tmp/      # $7 used to download and unzip files.
 
 
 echo "Finished creating directories!
