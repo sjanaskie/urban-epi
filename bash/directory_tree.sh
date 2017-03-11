@@ -11,29 +11,36 @@ Please enter the absolute path to the parent directory. You may start from home 
 WARNING: It must end with a slash ('/').
 "
 
-read parent
+read DIR
 
-if [ ! -d "$parent" ]; then
-  echo "Error: '$parent' is not a directory, returning to prompt." >> /dev/stderr
+if [ ! -d "$DIR" ]; then
+  echo "Error: '$DIR' is not a directory, returning to prompt." >> /dev/stderr
   read -p "Press enter to continue."
   echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone. 
 WARNING: It must end with a slash ('/').
 "
-    read parent
+    read DIR
 
 fi
 
-DIR=$parent
+# Top level directories. These don't exist yet.
+DATA=$DIR/data/
+IND=$DIR/indicators
+mkdir -p $DATA # make new directories
+mkdir -p $IND 
 
 # Location of bash scripts
-SH=$DIR/bin/sh/
+SH=$DIR/source/bash/
 
 # Grass DB directories
 GRASSDB=$DIR/grassdb/
 
 # Raw data directories
-RAS=$DIR/data/raster
-VEC=$DIR/data/vector
-TMP=$DIR/data/tmp/
+RAS=$DIR/data/raster    # all and only raster data goes here
+VEC=$DIR/data/vector    # all and only vector data goes here.
+TMP=$DIR/data/tmp/      # used to download and unzip files.
 
+
+echo "Finished creating directories!
+"
 
