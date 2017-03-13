@@ -27,18 +27,26 @@ fi
 export DATA=$DIR/data # $1
 export IND=$DIR/indicators # $2
 mkdir -p $DATA # make new directories
-mkdir -p $IND 
+mkdir -p $IND
 
 # Location of bash scripts
 export SH=$DIR/source/bash # $3
+mkdir -p $SH
 
 # Grass DB directories
 export GRASSDB=$DIR/grassdb # $4
+mkdir -p $GRASSDB
 
 # Raw data directories
 export RAS=$DIR/data/raster    # $5 all and only raster data goes here
 export VEC=$DIR/data/vector    # $6 all and only vector data goes here.
 export TMP=$DIR/data/tmp      # $7 used to download and unzip files.
+mkdir -p $RAS
+mkdir -p $VEC 
+mkdir -p $TMP
+
+export CITIES=$VEC/city_shapes
+mkdir $CITIES
 
 
 echo "Finished creating directories!
