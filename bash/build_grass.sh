@@ -18,7 +18,7 @@ export TMP=$DIR/data/tmp
 mkdir $GRASSDB && cd $GRASSDB
 # make vrt to create global location
 gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif                                 #Land Cover
-grass70 -text  -c  -c   $RAS/glcf/landuse_cover.vrt urban_environmental_assessment  $GRASSDB
+grass -text  -c  -c   $RAS/glcf/landuse_cover.vrt urban_environmental_assessment  $GRASSDB
 g.extension r.area  #add r.area extension to grass7
 
 ######################################################################
@@ -35,4 +35,14 @@ g.extension r.area  #add r.area extension to grass7
 
 
 for city in  $VEC/carto_cities/*/*.shp ; do bash $SH/patch_analysis.sh $city ; done
+
+# now compile the outputs of the r.li scripts from folder below
+# /home/user/.grass7/r.li/output/*
+
+
+
+
+
+
+    echo $file |  
 
