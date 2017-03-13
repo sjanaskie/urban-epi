@@ -51,5 +51,6 @@ air_files/
 *.kate-swp
 *.jpg
 **/data/**
+./python-notebooks/cache/*
 
 
