@@ -34,5 +34,5 @@ This will prompt you to enter the <i>absolute</i> path to your parent directory 
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
 
 ### `source/bash/setup.sh -grass` </br>
-This sets up the grassdatabase with mapsets for every city stored in carto_cities directory.
+This sets up the grassdatabase with mapsets for every city stored in ./data/vector/city_shapes directory.
 
