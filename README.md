@@ -18,12 +18,16 @@ Importantly, the repo is intended to be cloned into a parent directory.
 `git clone http://github.com/ryanthomas/urban-epi.git`
 
 The setup script takes one of three arguements: 
-- `-dir` : To set up the directpry structure,
+- `-dir` : To set up the directory structure,
 - `-data` : To download the data, and
 - `-grass` : To set up the grass database.
-It is necessary that these be run one at a time. Future developments may allow them to be run together.</br>
+It is necessary that these be run one at a time in this order. </br>
+// Future developments may allow them to be run together with an `-all` flag.</br>
 `source/bash/setup.sh -dir`</br>
-This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above).
+This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above). To get the absolute path to your parent directory:</br> 
+- enter the directory from a bash terminal, </br> 
+- type `echo $PWD` in your bash terminal, and</br>
+- copy the output.
 
 `source/bash/setup.sh -data` </br>
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
