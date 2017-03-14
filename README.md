@@ -12,10 +12,10 @@ All the tools used in this analysis are open source, including the data, which a
 - Internet connection (downloads take a long time [>1 hour] on slow internet)
 
 ## Setup
-Importantly, the repo is intended to be cloned into a parent directory. 
+Importantly, the repo is intended to be cloned into a parent directory and renamed "source". The name of the directory once it is cloned should be "source".
 
-`mkdir parent` Feel free to call this something else. In my environment, it is called urban_epi.
-`git clone http://github.com/ryanthomas/urban-epi.git`
+`mkdir urban_epi` This is to make the parent directory called 'urban_epi'. Feel free to call this something else. In my environment, it is called urban_epi.</br>
+`git clone http://github.com/ryanthomas/urban-epi.git source` to clone and rename the diectory.
 
 The setup script takes one of three arguements: 
 - `-dir` : To set up the directory structure,
