@@ -25,10 +25,10 @@ It is necessary that these be run one at a time in this order. </br>
 // Future developments may allow them to be run together with an `-all` flag.</br>
 
 ### `source/bash/setup.sh -dir`</br>
-This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above). To get the absolute path to your parent directory:</br> 
-- enter the directory from a bash terminal, </br> 
-- type `echo $PWD` in your bash terminal, and</br>
-- copy the output.
+This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above). Use the following steps to get the absolute path to your parent directory. You will need to do this outside the script's dialogue (i.e. before typing the above script). You can also exit once you start without breaking anything.</br> 
+- Enter the directory from a bash terminal. If you haven't moved, do nothing - you're already there. </br> 
+- Type `echo $PWD` in your bash terminal, and</br>
+- Copy the output.
 
 ### `source/bash/setup.sh -data` </br>
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
