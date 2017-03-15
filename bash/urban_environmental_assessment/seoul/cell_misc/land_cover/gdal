@@ -1,0 +1,4 @@
+file: /home/user/projects/urban_epi/data/raster/glcf/landuse_cover.vrt
+band: 1
+null: none
+type: 1

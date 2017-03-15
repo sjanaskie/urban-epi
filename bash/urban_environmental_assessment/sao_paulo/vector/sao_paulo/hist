@@ -1,0 +1,3 @@
+COMMAND: v.external input="/home/user/projects/urban_epi/data/vector/carto_cities/sao_paulo/sao_paulo.shp" layer="sao_paulo"
+GISDBASE: /home/user/projects/urban_epi/source/bash
+LOCATION: urban_environmental_assessment MAPSET: sao_paulo USER: user DATE: Wed Mar 15 16:31:18 2017

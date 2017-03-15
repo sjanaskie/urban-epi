@@ -8,23 +8,21 @@
 #               in the previous step.
 # 
 #############################################################################
-# export DIR=~/projects/urban-epi
-# export SH=$DIR/source/bash    # 3
-# export GRASSDB=$DIR/grassdb   # 4
-# export RAS=$DIR/data/raster    # 5 all and only raster data goes here
-# export VEC=$DIR/data/vector    # 6 all and only vector data goes here.
-# export TMP=$DIR/data/tmp 
+export DIR=~/projects/urban_epi
+export SH=$DIR/source/bash    # 3
+export GRASSDB=$DIR/grassdb   # 4
+export RAS=$DIR/data/raster    # 5 all and only raster data goes here
+export VEC=$DIR/data/vector    # 6 all and only vector data goes here.
+export TMP=$DIR/data/tmp 
 
 mkdir $GRASSDB && cd $GRASSDB
 # make vrt to create global location
-gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif                                 #Land Cover
-grass72 -text  -c  -c   $RAS/glcf/landuse_cover.vrt
+gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
 
-# TODO
-# which grass version?
+bash start_grass.sh
 
-urban_environmental_assessment  $GRASSDB
-g.extension r.area  #add r.area extension to grass7
+
+#Land Cover
 
 ######################################################################
 #r.in.gdal for all global rasters to PERMANENT mapset. 
