@@ -8,18 +8,6 @@
 #               in the previous step.
 # 
 #############################################################################
-export DIR=~/projects/urban_epi
-export SH=$DIR/source/bash    # 3
-export GRASSDB=$DIR/grassdb   # 4
-export RAS=$DIR/data/raster    # 5 all and only raster data goes here
-export VEC=$DIR/data/vector    # 6 all and only vector data goes here.
-export TMP=$DIR/data/tmp 
-
-mkdir $GRASSDB && cd $GRASSDB
-# make vrt to create global location
-gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
-
-bash start_grass.sh
 
 
 #Land Cover
@@ -41,11 +29,3 @@ for city in  $VEC/carto_cities/*/*.shp ; do bash $SH/patch_analysis.sh $city ; d
 
 # now compile the outputs of the r.li scripts from folder below
 # /home/user/.grass7/r.li/output/*
-
-
-
-
-
-
-    echo $file |  
-
