@@ -14,8 +14,7 @@
 
 
 DIR=$(echo $PWD)
-echo "Setting parent directory to $DIR. Do you want to continue? 
-y/n"
+echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?    y/n"
 
 read go
 if [ ! "$go" = "y" ]; then
@@ -85,7 +84,7 @@ echo "exporting variables "
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
-gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
+gdalbuildvrt  -overwrite -a_srs EPSG:4326  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
 
 export GRASS_BATCH_JOB="$SH/build_grass.sh"
 
