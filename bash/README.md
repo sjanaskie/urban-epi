@@ -5,6 +5,8 @@ This is a research tool for global urban environmental assessment.
 
 ## Requirements
 All the tools used in this analysis are open source, including the data, which are freely available on the internet.
+- python library [OMnx](https://github.com/gboeing/osmnx)
+    You can install this with `pip install osmnx`.
 - Bash environment
 - GDAL/OGR
 - GRASS 7.0 or GRASS 7.2
