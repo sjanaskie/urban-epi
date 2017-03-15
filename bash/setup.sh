@@ -12,18 +12,15 @@
 # 
 #############################################################################
 
-echo "
-Please enter the absolute path to the parent directory starting from root '/'. Hint: This is the directory where you ran git clone."
 
-read DIR
+DIR=$(echo $PWD)
+echo "Setting parent directory to $DIR. Do you want to continue? 
+y/n"
 
-    if [ ! -d "$DIR" ]; then
-    echo "Error: '$DIR' is not a directory, returning to prompt." >> /dev/stderr
-    read -p "Press enter to continue."
-    echo "Please enter the absolute path to the parent directory starting from root '/'. Hint: This is the directory where you ran git clone."
-        read DIR
-
-    fi
+read go
+if [ ! "$go" = "y" ]; then
+    exit 0
+fi
 
 export DATA=$DIR/data/
 export IND=$DIR/indicators
@@ -86,17 +83,21 @@ echo -------------------------
 echo "exporting variables "
 
 
-mkdir $GRASSDB && cd $GRASSDB
+mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
 gdalbuildvrt  -overwrite   $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
 
 export GRASS_BATCH_JOB="$SH/build_grass.sh"
 
-grass $GRASSDB/urban_environmental_assessment/PERMANENT
+#Blow up previous databse without asking.
+rm -rf $GRASSDB/urban
+
+GISDBASE=$GRASSDB/urban
+
+grass -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
 
 unset GRASS_BATCH_JOB
 
 fi
-
 
 
