@@ -14,14 +14,14 @@
 if [ "$1" = "-dir" ]; then
 
 echo "
-Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+Please enter the absolute path to the parent directory starting from root '/'. Hint: This is the directory where you ran git clone."
 
 read DIR
 
     if [ ! -d "$DIR" ]; then
     echo "Error: '$DIR' is not a directory, returning to prompt." >> /dev/stderr
     read -p "Press enter to continue."
-    echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+    echo "Please enter the absolute path to the parent directory starting from root '/'. Hint: This is the directory where you ran git clone."
         read DIR
 
     fi
@@ -42,6 +42,12 @@ export GRASSDB=$DIR/grassdb/
 export RAS=$DIR/data/raster    # all and only raster data goes here
 export VEC=$DIR/data/vector    # all and only vector data goes here.
 export TMP=$DIR/data/tmp/      # used to download and unzip files.
+mkdir -p $RAS 
+mkdir -p $VEC 
+mkdir -p $TMP 
+
+
+
 echo ---------------------------------------------------------
 echo "Finished creating directories!
 If you wish to download the data run: ./setup.sh -data
@@ -53,7 +59,7 @@ elif [ "$1" = "-data" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: '$DIR' is not a directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
-        echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+        echo "Please enter the absolute path to the parent directory starting from root '/'. Hint: This is the directory where you ran git clone."
         read DIR
     fi
 echo ---------------------------
