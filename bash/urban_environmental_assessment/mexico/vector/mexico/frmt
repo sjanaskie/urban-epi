@@ -1,3 +1,0 @@
-format: ogr
-dsn: /home/user/projects/urban_epi/data/vector/carto_cities/mexico/mexico.shp
-layer: mexico

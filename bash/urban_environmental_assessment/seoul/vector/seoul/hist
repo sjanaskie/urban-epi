@@ -1,3 +1,0 @@
-COMMAND: v.external input="/home/user/projects/urban_epi/data/vector/carto_cities/seoul/seoul.shp" layer="seoul"
-GISDBASE: /home/user/projects/urban_epi/source/bash
-LOCATION: urban_environmental_assessment MAPSET: seoul USER: user DATE: Wed Mar 15 16:31:27 2017

@@ -1,3 +1,0 @@
-COMMAND: v.external input="/home/user/projects/urban_epi/data/vector/carto_cities/london/london.shp" layer="london"
-GISDBASE: /home/user/projects/urban_epi/source/bash
-LOCATION: urban_environmental_assessment MAPSET: london USER: user DATE: Wed Mar 15 16:30:29 2017

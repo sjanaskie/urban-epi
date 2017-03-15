@@ -1,3 +1,0 @@
-COMMAND: v.external input="/home/user/projects/urban_epi/data/vector/carto_cities/jakarta/jakarta.shp" layer="jakarta"
-GISDBASE: /home/user/projects/urban_epi/source/bash
-LOCATION: urban_environmental_assessment MAPSET: jakarta USER: user DATE: Wed Mar 15 16:30:06 2017
