@@ -25,10 +25,10 @@ with bounds:        $BOUNDS
 #################################
 "
 
-grass $GRASSDB/$NAME
 
-g.mapset -c  mapset=$NAME location=$GRASSDB/urban dbase=$GRASSDB 
-v.external -o $1 layer=$NAME --overwrite
+g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
+
+v.external  $1 layer=$NAME --overwrite
 g.region  $BOUNDS --overwrite 
 
 r.external     input=$RAS/glcf/landuse_cover.vrt     output=land_cover@$NAME --overwrite 
