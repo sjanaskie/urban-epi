@@ -19,6 +19,7 @@
 #r.in.gdal     input=raw/Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
 
 #######################################################################
+
 ###                START WORKING WITH GRASS DATABASE                ###
 ######################################################################
 
