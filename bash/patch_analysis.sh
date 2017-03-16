@@ -14,7 +14,7 @@
 #############################################################################
 
 # export GRASSDB=$DIR/grassdb
-
+LOCATION_NAME=
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
 BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
 
@@ -27,7 +27,7 @@ with bounds:        $BOUNDS
 
 g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
 
-v.external  $1 layer=$NAME --overwrite
+v.external -o  $1 layer=$NAME --overwrite
 g.region  $BOUNDS --overwrite 
 
 r.external     input=$RAS/glcf/landuse_cover.vrt     output=land_cover@$NAME --overwrite 
