@@ -22,6 +22,8 @@ cd $DIR
 # Protected Planet dot Net files used for biodiversity.
 cd $TMP && wget http://wcmc.io/wdpa_current_release  # Move into TMP; Download protected planet files
 
+# Get city shape files using python osmnx
+python source/python/get_city_shapes.py
 
 
 ## Population density from University of Columbia's SEDAC, CEISN.

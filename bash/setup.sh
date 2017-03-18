@@ -93,7 +93,7 @@ rm -rf $GRASSDB/urban
 
 GISDBASE=$GRASSDB/urban
 
-grass -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
+grass72 -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
 
 unset GRASS_BATCH_JOB
 
