@@ -1,29 +1,28 @@
+#! /bin/bash/env python
+
 import osmnx as ox, matplotlib.pyplot as plt
 from descartes import PolygonPatch
 from shapely.geometry import Polygon, MultiPolygon
-ox.config(log_console=True, use_cache=True)
+import json
+import os, sys
+from places import *
 
-place_names = ['Ho Chi Minh City, Vietnam',
-               'Beijing, China', 
-               'Jakarta, Indonesia',
-               'London, UK',
-               'Los Angeles, California, USA',
-               'Manila, Philippines',
-               'Mexico City, Mexico',
-               'Quito, Ecuador',
-               'New Delhi, India',
-               'Sao Paulo, Brazil',
-               'New York, New York, USA',
-               'Seoul, South Korea',
-               'Singapore, Singapore',
-               'Tokyo, Japan',
-               'Nairobi, Kenya',
-               'Bangalore, India']
+ox.config(log_console=True, use_cache=True, data_folder='../../data/vector/city_shapes/')
 
-# pass in buffer_dist in meters - notice plural 'gdf_from_places'
-for place in place_names:
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+for place in places:
     name = (place.replace(",","").replace(" ","")) # make better place_names
-    print("getting shape of: " + name) 
-    city_20kmbuff = ox.gdf_from_place(place, buffer_dist=20000)
-    city_20kmbuff['place_name'] = name # overwrite place_names
-    ox.save_gdf_shapefile(city_20kmbuff, filename=name, folder='../../data/vector/city_shapes/')
+    print('working on: ', name)
+
+    #make a geodataframe of the street network (outline) from openstreetmap place names
+    # use retain_all if you want to keep all disconnected subgraphs (e.g. when your places aren't adjacent)
+    G = ox.graph_from_place(place, network_type='drive', retain_all=True)
+    G = ox.project_graph(G)
+    
+    ox.save_graph_shapefile(gdf, filename=name)
+    
