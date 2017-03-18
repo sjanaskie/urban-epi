@@ -25,12 +25,12 @@ with bounds:        $BOUNDS
 #################################
 "
 
+g.region  $BOUNDS --overwrite 
 g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
 
 v.external  $1 layer=$NAME --overwrite
-g.region  $BOUNDS --overwrite 
-
 r.external     input=$RAS/glcf/landuse_cover.vrt     output=land_cover@$NAME --overwrite 
+
 r.reclass   input=land_cover@$NAME    output=urban@$NAME   --overwrite rules=- << EOF
 13  = 0 urban
 *   = NULL
@@ -62,13 +62,15 @@ r.mapcalc  "buffer = if(extended_urban_area==$BIG,1,null())" --overwrite --quiet
 
 # 4. Calculate the urban areas including partial intersections.
 # -c uses circular neighbors; add 0 values to 
-r.neighbors -c input=buffer@$NAME selection=all_clumps@$NAME    output=buffer_mask@$NAME  method=stddev size=7 --overwrite --quiet
-r.mask      raster=buffer_mask@$NAME --quiet
-r.mapcalc   "urban_agglomeration = all_clumps" --overwrite --quiet
+r.neighbors -c input=buffer selection=all_clumps    output=buffer_mask  method=stddev size=7 --overwrite --quiet
+
+
+r.mask      raster=buffer_mask --quiet
+r.mapcalc   "agglomeration = all_clumps" --overwrite --quiet
 r.mask -r
 
 # Reclassify all areas with STDEV of 0 or 1 to be part of the urban agglomeration.
-r.reclass    input=extended_urban_area@$NAME   output=urban_agglomeration@$NAME --overwrite --quiet rules=- << EOF
+r.reclass    input=agglomeration   output=urban_agglomeration --overwrite --quiet rules=- << EOF
 * = 1 urban
 EOF
     
