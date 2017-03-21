@@ -1,5 +1,3 @@
-
-
 #!/bin/bash
 
 ###########################################################################
@@ -84,7 +82,7 @@ echo "exporting variables "
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
-gdalbuildvrt  -overwrite -a_srs EPSG:4326  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
+gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
 
 export GRASS_BATCH_JOB="$SH/build_grass.sh"
 
@@ -93,7 +91,7 @@ rm -rf $GRASSDB/urban
 
 GISDBASE=$GRASSDB/urban
 
-grass72 -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
+grass -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
 
 unset GRASS_BATCH_JOB
 
