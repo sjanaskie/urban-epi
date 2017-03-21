@@ -18,12 +18,18 @@ Importantly, the repo is intended to be cloned into a parent directory and renam
 `git clone http://github.com/ryanthomas/urban-epi.git source` to clone and rename the diectory.
 
 The setup script takes one of three arguements: 
-- `-dir` : To set up the directory structure,
-- `-data` : To download the data, and
-- `-grass` : To set up the grass database.
+| Command | Description |
+| --- | --- |
+| `source/bash/00_setup.sh -dir` | To set up the directory structure |
+| `source/bash/00_setup.sh -data` | To download the data |
+| `source/bash/00_setup.sh -build` | To set up the grass database |
+| `source/bash/00_setup.sh -form` | To calculate the urban form statistics |
+| `source/bash/00_setup.sh -air` | To calculat the air indicators |
+
 It is necessary that these be run one at a time in this order. </br>
 // Future developments may allow them to be run together with an `-all` flag.</br>
 
+## Details
 ### `source/bash/setup.sh -dir`</br>
 This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above). Use the following steps to get the absolute path to your parent directory. You will need to do this outside the script's dialogue (i.e. before typing the above script). You can also exit once you start without breaking anything.</br> 
 - Enter the directory from a bash terminal. If you haven't moved, do nothing - you're already there. </br> 
@@ -33,6 +39,6 @@ This will prompt you to enter the <i>absolute</i> path to your parent directory 
 ### `source/bash/setup.sh -data` </br>
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
 
-### `source/bash/setup.sh -grass` </br>
-This sets up the grassdatabase with mapsets for every city stored in ./data/vector/city_shapes directory.
+### `source/bash/setup.sh -build` </br>
+Reads in data to PERMANENT mapset.
 
