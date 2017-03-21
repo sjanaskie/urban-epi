@@ -7,7 +7,9 @@ import json
 import os, sys
 from places import *
 
-ox.config(log_console=True, use_cache=True, data_folder=os.path('../../data/vector/city_networks/'))
+data_path = os.path.dirname('../../data/vector/city_networks/')
+
+ox.config(log_console=True, use_cache=True, data_folder=data_path)
 
 def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
