@@ -17,15 +17,18 @@
 #r.in.gdal     input=raw/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   output=pop_density_2015
 #r.in.gdal     input=raw/Hansen_GFC2015_gain_00N_080W.tif   output=tree_gain
 #r.in.gdal     input=raw/Hansen_GFC2015_loss_00N_080W.tif   output=quito_tree_losss
+r.external     input=$RAS/glcf/landuse_cover.vrt     output=landuse --overwrite
+r.external     input=$RAS/pm25/GlobalGWR_PM25_GL_201401_201412-RH35_NoDust_NoSalt-NoNegs.asc output=air_pm25_2014 --overwrite
+r.external     input=$RAS/pm25/GlobalGWR_PM25_GL_201501_201512-RH35_NoDust_NoSalt-NoNegs.asc output=air_pm25_2015 --overwrite
 
 #######################################################################
 
 ###                START WORKING WITH GRASS DATABASE                ###
 ######################################################################
 
+
 # Reading in patch analysis script from bin.
-
-
+echo "Calculating patch statistics."
 for city in  $VEC/carto_cities/*/*.shp ; do bash $SH/patch_analysis.sh $city ; done
 
 # now compile the outputs of the r.li scripts from folder below
