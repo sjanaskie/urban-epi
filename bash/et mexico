@@ -1,0 +1,62 @@
+d.correlate(1grass)                                                                Grass User's Manual                                                               d.correlate(1grass)
+
+NNAAMMEE
+       dd..ccoorrrreellaattee  - Prints a graph of the correlation between raster maps (in pairs).
+
+KKEEYYWWOORRDDSS
+       display, statistics, raster, diagram, correlation
+
+SSYYNNOOPPSSIISS
+       dd..ccoorrrreellaattee
+       dd..ccoorrrreellaattee ----hheellpp
+       dd..ccoorrrreellaattee mmaapp=_n_a_m_e[,_n_a_m_e,...]  [--hheellpp]  [--vveerrbboossee]  [--qquuiieett]  [--uuii]
+
+   FFllaaggss::
+       ----hheellpp
+           Print usage summary
+
+       ----vveerrbboossee
+           Verbose module output
+
+       ----qquuiieett
+           Quiet module output
+
+       ----uuii
+           Force launching GUI dialog
+
+   PPaarraammeetteerrss::
+       mmaapp=_n_a_m_e_[_,_n_a_m_e,...] [[rreeqquuiirreedd]]
+           Name of raster map(s)
+
+DDEESSCCRRIIPPTTIIOONN
+       _d_._c_o_r_r_e_l_a_t_e  displays graphically the results of a _r_._s_t_a_t_s analysis run on two raster map layers. This module highlights the correlation (or lack of it) among data layers (scat‐
+       tergram).
+
+       The results are displayed in the active display frame on the user’s graphics monitor. _d_._c_o_r_r_e_l_a_t_e erases the active frame before displaying results. If no  graphics  monitor  is
+       open, a file map.png is generated in the current directory.
+
+NNOOTTEESS
+       If three or four map layers are specified, the correlation among each combination of two data layers is displayed.
+
+EEXXAAMMPPLLEE
+       Scatterplot of two LANDSAT TM7 channels (North Carolina sample dataset):
+
+       g.region raster=lsat7_2002_30 -p
+       d.correlate map=lsat7_2002_30,lsat7_2002_40
+       Scatterplot of two LANDSAT TM7 channels
+
+SSEEEE AALLSSOO
+        _d_._t_e_x_t_, _d_._g_r_a_p_h_, _r_._c_o_i_n_, _r_._r_e_g_r_e_s_s_i_o_n_._l_i_n_e_, _r_._s_t_a_t_s
+
+AAUUTTHHOORRSS
+       Michael Shapiro, U.S.Army Construction Engineering Research Laboratory
+
+       Rewritten to GRASS 6 (from csh to sh) by Markus Neteler; from sh to Python by Glynn Clements
+
+       _L_a_s_t _c_h_a_n_g_e_d_: _$_D_a_t_e_: _2_0_1_5_-_1_0_-_2_7 _1_8_:_4_1_:_3_4 _+_0_1_0_0 _(_T_u_e_, _2_7 _O_c_t _2_0_1_5_) _$
+
+       Main index | Display index | Topics index | Keywords index | Full index
+
+       © 2003-2016 GRASS Development Team, GRASS GIS 7.0.4 Reference Manual
+
+GRASS 7.0.4                                                                                                                                                          d.correlate(1grass)
