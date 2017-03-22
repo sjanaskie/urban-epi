@@ -84,7 +84,7 @@ r.reclass    input=agglomeration   output=urban_agglomeration --overwrite --quie
 * = 1 urban
 EOF
 
-g.remove type=raster,raster,raster,raster name=agglomeration,extended_urban_area,urban,buffer
+g.remove -f type=raster,raster,raster,raster name=agglomeration,extended_urban_area,urban,buffer
 
 
 echo "Running patch stats."
@@ -97,8 +97,8 @@ r.li.patchnum       input=urban_agglomeration@$NAME config=patch_index       out
 r.li.padrange       input=urban_agglomeration@$NAME config=patch_index       output=padrange_$NAME     --overwrite --quiet
 echo "Patch stats complete."
 
-v.external  $1 layer=$NAME --overwrite
+#v.external  $1 layer=$NAME --overwrite
 
 mkdir -p $DIR/GTiffs/agglomeration
-r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/mexico format=GTiff --overwrite
+r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/$NAME format=GTiff --overwrite
 
