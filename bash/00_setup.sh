@@ -82,7 +82,7 @@ echo ---------------------------
 echo "building grass"
 echo -------------------------
 
-mkdir -p $VEC/final_cities/ && cp $SH/seed_data/* $VEC/final_cities/
+mkdir -p $VEC/final_cities/ && cp $DIR/source/seed_data/* $VEC/final_cities/
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
@@ -123,7 +123,7 @@ elif [ "$1" = "-air" ]; then
         read DIR
     fi
 echo ---------------------------
-echo "analyzing urban form"
+echo "analyzing urban air quality"
 echo -------------------------
 # Reading in patch analysis script from bin.
 export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
