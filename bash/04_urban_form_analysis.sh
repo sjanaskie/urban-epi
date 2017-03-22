@@ -23,14 +23,16 @@ for file in ~/.grass7/r.li/output/*; do
 
 
 R
+
 require(dplyr)
 require(tidyr)
 frag_stats <- read.table("~/projects/urban_epi/data/stats/frag_stats.txt", header = FALSE, sep = ",")
+
 colnames(frag_stats) <- c("stat","city", "value")
 frag_stats
 frag_stats_wd <- frag_stats %>% spread(stat, value)
+
 plot(frag_stats_wd)
 
-
-quit()
+quit("yes")
 
