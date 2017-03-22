@@ -67,11 +67,12 @@ r.clump -d --overwrite input=buffer@$NAME   output=extended_urban_area@$NAME --q
 # Select the biggest clump as the central urban area.
 BIG=$(r.report -n extended_urban_area@$NAME  units=c sort=asc | awk -F "|" '{ print $2 }' | tail -n 4 | head -n 1)
 r.mapcalc  "buffer_mask = if(extended_urban_area==$BIG,1,null())" --overwrite --quiet
+r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/mexico format=GTiff --overwrite
 
 echo "buffer_mask made, now calculating neighbors"
 # 4. Calculate the urban areas including partial intersections.
 # -c uses circular neighbors; add 0 values to 
-r.neighbors -c input=buffer_mask selection=all_clumps    output=buffer_mask  method=stddev size=7 --overwrite --quiet
+r.neighbors -c input=buffer_mask  selection=all_clumps    output=buffer_mask  method=stddev size=7 --overwrite --quiet
 
 echo "clipping agglomeration by mask"
 r.mask      raster=buffer_mask --quiet
@@ -82,6 +83,9 @@ r.mask -r
 r.reclass    input=agglomeration   output=urban_agglomeration --overwrite --quiet rules=- << EOF
 * = 1 urban
 EOF
+
+g.remove type=raster,raster,raster,raster name=agglomeration,extended_urban_area,urban,buffer
+
 
 echo "Running patch stats."
 r.li.padcv          input=urban_agglomeration@$NAME config=patch_index       output=padcv_$NAME         --overwrite --quiet
@@ -95,5 +99,6 @@ echo "Patch stats complete."
 
 v.external  $1 layer=$NAME --overwrite
 
-#r.out.gdal -tf  input=urban_agglomeration output= format=GTiff --overwrite
+mkdir -p $DIR/GTiffs/agglomeration
+r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/mexico format=GTiff --overwrite
 
