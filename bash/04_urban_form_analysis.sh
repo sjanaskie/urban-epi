@@ -18,21 +18,17 @@ for city in  $VEC/final_cities/*.shp ; do bash $SH/grass_patch_stats.sh $city ; 
 mkdir -p $DATA/stats/
 for file in ~/.grass7/r.li/output/*; do
     val=$(cat $file | awk -F "|" '{ print $2 }') 
-    echo `basename $file`"/"$val | awk   -F "/" '{ print $1","$2","$3}'
+    echo `basename $file`"_"$val | awk   -F "_" '{ print $1","$2","$3}'
     done > $DATA/stats/frag_stats.txt
 
 
 R
-
 require(dplyr)
 require(tidyr)
 frag_stats <- read.table("~/projects/urban_epi/data/stats/frag_stats.txt", header = FALSE, sep = ",")
-
 colnames(frag_stats) <- c("stat","city", "value")
 frag_stats
 frag_stats_wd <- frag_stats %>% spread(stat, value)
-
 plot(frag_stats_wd)
-
 q("no")
 
