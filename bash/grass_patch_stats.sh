@@ -17,8 +17,9 @@
 # export GRASSDB=$DIR/grassdb
 LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
-BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
+#BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
 
+# make a config file for grass
 mkdir -p ~/.grass7/r.li/
 echo "SAMPLINGFRAME 0|0|1|1
 SAMPLEAREA 0.0|0.0|1.0|1.0" > ~/.grass7/r.li/patch_index
@@ -28,13 +29,18 @@ SAMPLEAREA 0.0|0.0|1.0|1.0" > ~/.grass7/r.li/patch_index
 echo "
 #################################
 Working on city:    $NAME       
-with bounds:        $BOUNDS     
 #################################
+"
+
+v.import  input=$1 layer=$NAME extent=input --overwrite 
+v.buffer input=$NAME output=buffered_region distance=100000 minordistance=100000
+
+echo " DONE IMPORTING! 
 "
 
 # open a mapset and set the region.
 g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
-g.region  $BOUNDS --overwrite 
+g.region  vect=buffered_region --overwrite 
 g.gisenv
 
 
@@ -101,7 +107,6 @@ r.li.patchnum       input=urban_agglomeration@$NAME config=patch_index       out
 r.li.padrange       input=urban_agglomeration@$NAME config=patch_index       output=padrange_$NAME     --overwrite --quiet
 echo "Patch stats complete."
 
-#v.external  $1 layer=$NAME --overwrite
 
 mkdir -p $DIR/GTiffs/agglomeration
 r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/$NAME format=GTiff --overwrite

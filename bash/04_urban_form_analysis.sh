@@ -13,22 +13,33 @@ export TMP=$DIR/data/tmp/      # used to download and unzip files.
 
 echo "Calculating patch statistics."
 
-for city in  $VEC/final_cities/*.shp ; do bash $SH/grass_patch_stats.sh $city ; done
+for city in  $VEC/final_cities/*.shp ; do 
+    # strip .shp
+    rm -f ${city}_proj.*
+    ogr2ogr -t_srs EPSG:4326  ${city}
+    bash $SH/grass_patch_stats.sh $city ; done
+
 
 mkdir -p $DATA/stats/
 for file in ~/.grass7/r.li/output/*; do
     val=$(cat $file | awk -F "|" '{ print $2 }') 
-    echo `basename $file`"_"$val | awk   -F "_" '{ print $1","$2","$3}'
+    echo `basename $file`"."$val | awk   -F "." '{ print $1","$2","$3}'
     done > $DATA/stats/frag_stats.txt
 
+    
+#    R --vanilla --no-readline   -q  <<'EOF'
+# INDIR = Sys.getenv(c('INDIR'))
 
-R
+R --vanilla <<EOF
 require(dplyr)
 require(tidyr)
 frag_stats <- read.table("~/projects/urban_epi/data/stats/frag_stats.txt", header = FALSE, sep = ",")
 colnames(frag_stats) <- c("stat","city", "value")
 frag_stats
 frag_stats_wd <- frag_stats %>% spread(stat, value)
+postscript("path")  # png("path")
 plot(frag_stats_wd)
-q("no")
+dev.off()
+EOF
 
+# eog path/plot.png
