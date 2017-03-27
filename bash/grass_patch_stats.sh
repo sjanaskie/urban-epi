@@ -17,7 +17,7 @@
 # export GRASSDB=$DIR/grassdb
 LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
-#BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
+BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
 
 # make a config file for grass
 mkdir -p ~/.grass7/r.li/
@@ -32,11 +32,6 @@ Working on city:    $NAME
 #################################
 "
 
-v.import  input=$1 layer=$NAME extent=input --overwrite 
-v.buffer input=$NAME output=buffered_region distance=100000 minordistance=100000
-
-echo " DONE IMPORTING! 
-"
 
 # open a mapset and set the region.
 g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
@@ -98,7 +93,7 @@ g.remove -f type=raster,raster,raster,raster name=agglomeration,extended_urban_a
 
 
 echo "Running patch stats."
-r.li.padcv          input=urban_agglomeration@$NAME config=patch_index       output=padcv_$NAME         --overwrite --quiet
+r.li.padcv          input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.padcv         --overwrite --quiet
 r.li.patchdensity   input=urban_agglomeration@$NAME config=patch_index       output=patchdensity_$NAME  --overwrite --quiet
 r.li.mps            input=urban_agglomeration@$NAME config=patch_index       output=mps_$NAME          --overwrite --quiet
 r.li.edgedensity    input=urban_agglomeration@$NAME config=patch_index       output=edgedensity_$NAME  --overwrite --quiet
