@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 ###########################################################################
@@ -12,7 +11,7 @@
 #############################################################################
 
 
-DIR=$(echo $PWD)
+export DIR=$(echo $PWD)
 echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?    y/n"
 
 read go
@@ -125,6 +124,14 @@ export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
 GISDBASE=$GRASSDB/urban
 grass -text -c $GRASSDB/urban/PERMANENT/
 unset GRASS_BATCH_JOB
+
+echo "Would you like to continue to calculate air stats?"
+read go
+if [ "$go" = "y" ]; then
+    1="-air";
+    else
+    exit 0
+fi
 
 elif [ "$1" = "-air" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
