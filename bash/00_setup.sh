@@ -11,7 +11,7 @@
 #############################################################################
 
 
-DIR=$(echo $PWD)
+export DIR=$(echo $PWD)
 echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?    y/n"
 
 read go
@@ -19,13 +19,13 @@ if [ ! "$go" = "y" ]; then
     exit 0
 fi
 
-export DATA=$DIR/data/
-export IND=$DIR/indicators
-export SH=$DIR/source/bash/
-export GRASSDB=$DIR/grassdb/
-export RAS=$DIR/data/raster    # all and only raster data goes here
-export VEC=$DIR/data/vector    # all and only vector data goes here.
-export TMP=$DIR/data/tmp/      # used to download and unzip files.
+export DATA=${DIR}/data/
+export IND=${DIR}/indicators
+export SH=${DIR}/source/bash/
+export GRASSDB=${DIR}/grassdb/
+export RAS=${DIR}/data/raster    # all and only raster data goes here
+export VEC=${DIR}/data/vector    # all and only vector data goes here.
+export TMP=${DIR}/data/tmp/      # used to download and unzip files.
 
 echo "Exporting variables done."
 
@@ -82,11 +82,19 @@ echo ---------------------------
 echo "building grass"
 echo -------------------------
 
+
+# reproject GHS data from Molleweide
+# first make a new location with the data as-is
+grass -c -c -e $RAS/population/*.tif population
+
+
 mkdir -p $VEC/final_cities/ && cp $DIR/source/seed_data/* $VEC/final_cities/
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
 gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
+gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/tree_cover/tree_cover.vrt    $RAS/tree_cover/*.tif  
+
 
 export GRASS_BATCH_JOB="$SH/03_build_grass.sh"
 
@@ -110,10 +118,20 @@ echo ---------------------------
 echo "analyzing urban form"
 echo -------------------------
 # Reading in patch analysis script from bin.
+
+
 export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
 GISDBASE=$GRASSDB/urban
 grass -text -c $GRASSDB/urban/PERMANENT/
 unset GRASS_BATCH_JOB
+
+echo "Would you like to continue to calculate air stats?"
+read go
+if [ "$go" = "y" ]; then
+    1="-air";
+    else
+    exit 0
+fi
 
 elif [ "$1" = "-air" ]; then
     if [ ! "$DIR" = "$PWD" ]; then

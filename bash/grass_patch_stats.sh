@@ -4,7 +4,7 @@
 #
 # AUTHOR(S):    Ryan Thomas, Yale University
 #               
-# PURPOSE:      This scriptallows a number of grass70 functions to be 
+# PURPOSE:      This script allows a number of grass70 functions to be 
 #               performed on multiple files in different mapsets.
 #               variables:
 #               -bounds    bounding box
@@ -19,21 +19,18 @@ LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
 BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
 
-echo "SAMPLINGFRAME 0|0|1|1
-SAMPLEAREA 0.0|0.0|1.0|1.0" > ~/.grass7/r.li/patch_index
-
-
 
 echo "
 #################################
-Working on city:    $NAME       
-with bounds:        $BOUNDS     
+Working on city:    $NAME      
+With extent:        $BOUNDS
 #################################
 "
 
+
 # open a mapset and set the region.
 g.mapset -c  mapset=$NAME location=urban dbase=$GRASSDB 
-g.region  $BOUNDS --overwrite 
+g.region  $BOUNDS 
 g.gisenv
 
 
@@ -70,9 +67,8 @@ r.clump -d --overwrite input=buffer@$NAME   output=extended_urban_area@$NAME --q
 # Select the biggest clump as the central urban area.
 BIG=$(r.report -n extended_urban_area@$NAME  units=c sort=asc | awk -F "|" '{ print $2 }' | tail -n 4 | head -n 1)
 r.mapcalc  "buffer_mask = if(extended_urban_area==$BIG,1,null())" --overwrite --quiet
-r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/mexico format=GTiff --overwrite
-
 echo "buffer_mask made, now calculating neighbors"
+
 # 4. Calculate the urban areas including partial intersections.
 # -c uses circular neighbors; add 0 values to 
 r.neighbors -c input=buffer_mask  selection=all_clumps    output=buffer_mask  method=stddev size=7 --overwrite --quiet
@@ -87,20 +83,25 @@ r.reclass    input=agglomeration   output=urban_agglomeration --overwrite --quie
 * = 1 urban
 EOF
 
-g.remove -f type=raster,raster,raster,raster name=agglomeration,extended_urban_area,urban,buffer
+g.remove -f type=raster,raster,raster name=extended_urban_area,urban,buffer --quiet
 
+# Make a config file for grass. We determined the text for this configuration through the 
+# GUI ahead of time.
+mkdir -p ~/.grass7/r.li/
+echo "SAMPLINGFRAME 0|0|1|1
+SAMPLEAREA 0.0|0.0|1.0|1.0" > ~/.grass7/r.li/patch_index
 
+rm -rf ~/.grass7/r.li/output/*
 echo "Running patch stats."
-r.li.padcv          input=urban_agglomeration@$NAME config=patch_index       output=padcv_$NAME         --overwrite --quiet
-r.li.patchdensity   input=urban_agglomeration@$NAME config=patch_index       output=patchdensity_$NAME  --overwrite --quiet
-r.li.mps            input=urban_agglomeration@$NAME config=patch_index       output=mps_$NAME          --overwrite --quiet
-r.li.edgedensity    input=urban_agglomeration@$NAME config=patch_index       output=edgedensity_$NAME  --overwrite --quiet
-r.li.padsd          input=urban_agglomeration@$NAME config=patch_index       output=padsd_$NAME       --overwrite  --quiet
-r.li.patchnum       input=urban_agglomeration@$NAME config=patch_index       output=patchnum_$NAME    --overwrite  --quiet
-r.li.padrange       input=urban_agglomeration@$NAME config=patch_index       output=padrange_$NAME     --overwrite --quiet
+r.li.padcv          input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.padcv         --overwrite --quiet
+r.li.patchdensity   input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.patchdensity  --overwrite --quiet
+r.li.mps            input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.mps         --overwrite --quiet
+r.li.edgedensity    input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.edgedensity  --overwrite --quiet
+r.li.padsd          input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.padsd      --overwrite  --quiet
+r.li.patchnum       input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.patchnum    --overwrite  --quiet
+r.li.padrange       input=urban_agglomeration@$NAME config=patch_index       output=${NAME}.padrange     --overwrite --quiet
 echo "Patch stats complete."
 
-#v.external  $1 layer=$NAME --overwrite
 
 mkdir -p $DIR/GTiffs/agglomeration
 r.out.gdal  input=urban_agglomeration output=GTiffs/agglomeration/$NAME format=GTiff --overwrite
