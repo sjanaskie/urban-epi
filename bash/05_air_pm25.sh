@@ -26,6 +26,7 @@ export TMP=${DIR}/data/tmp/      # used to download and unzip files.
 echo "Calculating air statistics."
 
 for city in ${VEC}/city_boundaries/*.shp ; do
+    
     bash $SH/air_stats.sh $city ; done
    
 #mkdir -p $DATA/stats/
