@@ -133,21 +133,7 @@ if [ "$go" = "y" ]; then
     exit 0
 fi
 
-elif [ "$1" = "-air" ]; then
-    if [ ! "$DIR" = "$PWD" ]; then
-        echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
-        read -p "Press enter to continue."
-        echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
-        read DIR
-    fi
-echo ---------------------------
-echo "analyzing urban air quality"
-echo -------------------------
-# Reading in patch analysis script from bin.
-export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
-GISDBASE=$GRASSDB/urban
-grass -text -c $GRASSDB/urban/PERMANENT/
-unset GRASS_BATCH_JOB
+
 
 elif [ "$1" = "-air" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
