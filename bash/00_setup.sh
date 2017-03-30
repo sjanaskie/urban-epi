@@ -14,10 +14,12 @@
 export DIR=$(echo $PWD)
 echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?    y/n"
 
-read go
-if [ ! "$go" = "y" ]; then
+read start
+if [ ! "$start" = "y" ]; then
     exit 0
 fi
+
+echo "Skipping to $1"
 
 export DATA=${DIR}/data/
 export IND=${DIR}/indicators
@@ -54,13 +56,9 @@ exit 0
 # DOWNLOAD 
 #
 echo "Would you like to continue to DOWNLOAD the data?"
-read go
-if [ "$go" = "y" ]; then
-    1="-data";
-    else
-    exit 0
+read dl
 #######################################################################
-elif [ "$1" = "-data" ]; then
+elif [ "$1" = "-data" ] || [ "$dl" = "y" ]; then
 
 echo ------------------------------------------------------------------------------
 echo "Running download script. This will take a while. Why don't you grab a coffee in the Agora?"
@@ -74,13 +72,9 @@ echo "Download compete!"
 # BUILD 
 #
 echo "Would you like to continue to BUILD the database?"
-read go
-if [ "$go" = "y" ]; then
-    1="-build";
-    else
-    exit 0
+read bd
 #######################################################################
-elif [ "$1" = "-build" ]; then
+elif [ "$1" = "-build" ] || [ "$bd" = "y" ] ; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -121,14 +115,10 @@ unset GRASS_BATCH_JOB
 # FORM 
 #
 echo "Would you like to continue to calculate FORM stats?"
-read go
-if [ "$go" = "y" ]; then
-    1="-form";
-    else
-    exit 0
+read fm
 #######################################################################
 
-elif [ "$1" = "-form" ]; then
+elif [ "$1" = "-form" ] || [ "$fm" = "y" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -152,13 +142,10 @@ unset GRASS_BATCH_JOB
 # AIR 
 #
 echo "Would you like to continue to calculate AIR stats?"
-read go
-if [ "$go" = "y" ]; then
-    1="-air";
-    else
-    exit 0
+read ar
+
 #######################################################################
-elif [ "$1" = "-air" ]; then
+elif [ "$1" = "-air" ] || [ "$ar" = "y" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -174,5 +161,30 @@ GISDBASE=$GRASSDB/urban
 grass -text -c $GRASSDB/urban/PERMANENT/
 unset GRASS_BATCH_JOB
 
+#######################################################################
+#
+# AIR 
+#
+echo "Would you like to continue to calculate TRANSPORT stats?"
+read tr
+
+#######################################################################
+elif [ "$1" = "-trans" ] || [ "$tr" = "y" ]; then
+    if [ ! "$DIR" = "$PWD" ]; then
+        echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
+        read -p "Press enter to continue."
+        echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+        read DIR
+    fi
+echo ---------------------------
+echo "analyzing transportation"
+echo -------------------------
+# Reading in patch analysis script from bin.
+export GRASS_BATCH_JOB="$SH/06_transport.sh"
+GISDBASE=$GRASSDB/urban
+grass -text -c $GRASSDB/urban/PERMANENT/
+unset GRASS_BATCH_JOB
+
 fi
+
 
