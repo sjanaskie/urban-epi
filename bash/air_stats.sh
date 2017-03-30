@@ -1,31 +1,46 @@
 #! bin/bash
+###########################################################################
+#
+# AUTHOR(S):    Ryan Thomas, Yale University
+#               
+# PURPOSE:      This script allows a number of grass70 functions to be 
+#               performed on multiple files in different mapsets.
+#               variables:
+#               -bounds    bounding box
+#               -name      file name
+#               -location  GRASS location
+# 
+#############################################################################
 
+LOCATION_NAME=urban
+NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
+BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
 
+echo "
+#################################
+Working on city:    $NAME 
+with bounds         $BOUNDS
+#################################
+"
 
 # set mapping region
-g.mapset mexico
-g.region raster=agglomeration@mexico -p
+g.mapset ${NAME}
+g.region vector=${NAME}
 
-# read in mexico neighborhoods and overwrite
 # NOTE: v.external (as used in previous script) does not bring in attributes.
-v.in.ogr ~/projects/urban_epi/data/vector/final_cities/mexico.shp --overwrite
+v.in.ogr ${VEC}/city_boundaries/${NAME}.shp  snap=10e-7  --overwrite
 
+echo "v.rast.stats"
+# r.mapcalc  "air_meanpm25 = (air_pm25_2015@PERMANENT + air_pm25_2014@PERMANENT) / 2" --overwrite
+v.rast.stats -c map=${NAME}@${NAME} raster=air_pm25_2015@PERMANENT column_prefix=air_2015  method=range,median,stddev
+v.rast.stats -c map=${NAME}@${NAME} raster=air_pm25_2014@PERMANENT column_prefix=air_2014  method=range,median,stddev
 
-r.mapcalc  "air_meanpm25 = (air_pm25_2015@PERMANENT + air_pm25_2014@PERMANENT) / 2" --overwrite
+echo "writing regressions"
+#r.regression.line mapx=meters_from_all_clumps@${NAME} mapy=air_pm25_2015@PERMANENT  >> data/stats/air/2015_${NAME}_reg.txt
+#r.regression.line mapx=meters_from_all_clumps@${NAME} mapy=air_pm25_2014@PERMANENT  >> data/stats/air/2014_${NAME}_reg.txt
 
+mkdir -p ${VEC}/air/
+echo "outputting csv"
 
-v.rast.stats mexico raster=air_meanpm25 column_prefix=air  method=average,stddev,percentile, percentile=95
+v.out.ogr -c input=${NAME}@${NAME} layer=${NAME} output=${DATA}stats/air/${NAME}.csv format="CSV"  --overwrite --quiet
 
-d.mon wx0
-d.correlate map=air_meanpm25@mexico,meters_from_large_clumps@mexico
-
-r.regression.line mapx=meters_from_large_clumps@mexico mapy=air_meanpm25@mexico
-
-
-r.neighbors -c input=meters_from_clumps  selection=all_clumps    output=weighted_distance  method=stddev size=21 --overwrite --quiet
-r.out.xyz input=weighted distance output=elev_lid792_1m.csv separator=","
-r.mapcalc
-
-
-d.vect.thematic map=mexico column=air_average algorithm=int \
-nclasses=5 colors=0:195:176,39:255:0,251:253:0,242:127:11,193:126:60 

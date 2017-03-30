@@ -1,30 +1,36 @@
-#! bin/bash
+#! /bin/bash
+###########################################################################
+#
+# AUTHOR(S):    Ryan Thomas, Yale University
+#               
+# PURPOSE:      This script allows a number of grass70 functions to be 
+#               performed on multiple files in different mapsets.
+#               variables:
+#               -bounds    bounding box
+#               -name      file name
+#               -location  GRASS location
+# 
+#############################################################################
+# This file simply calls the grass_patch_statistics file on a folder of shapefiles.
+DIR=$(echo $PWD)
 
-# set mapping region
-g.mapset mexico
-g.region raster=agglomeration@mexico -p
-
-# read in mexico neighborhoods and overwrite
-# NOTE: v.external (as used in previous script) does not bring in attributes.
-v.in.ogr ~/projects/urban_epi/data/vector/final_cities/mexico.shp --overwrite
-
-
-r.mapcalc  "air_meanpm25 = (air_pm25_2015@PERMANENT + air_pm25_2014@PERMANENT) / 2" --overwrite
-
-
-v.rast.stats mexico raster=air_meanpm25 column_prefix=air  method=average,stddev,percentile, percentile=95
-
-d.mon wx0
-d.correlate map=air_meanpm25@mexico,meters_from_large_clumps@mexico
-
-r.regression.line mapx=meters_from_large_clumps@mexico mapy=air_meanpm25@mexico
-
-
-r.neighbors -c input=meters_from_clumps  selection=all_clumps    output=weighted_distance  method=stddev size=21 --overwrite --quiet
-r.out.xyz input=weighted distance output=elev_lid792_1m.csv separator=","
-r.mapcalc
+export DATA=${DIR}/data/
+export IND=${DIR}/indicators
+export SH=${DIR}/source/bash/
+export GRASSDB=${DIR}/grassdb/
+export RAS=${DIR}/data/raster/    # all and only raster data goes here
+export VEC=${DIR}/data/vector/  # all and only vector data goes here.
+export TMP=${DIR}/data/tmp/      # used to download and unzip files.
 
 
-d.vect.thematic map=mexico column=air_average algorithm=int \
-  nclasses=5 colors=0:195:176,39:255:0,251:253:0,242:127:11,193:126:60 
+echo "Calculating air statistics."
+
+for city in ${VEC}/city_boundaries/*.shp ; do
+    bash $SH/air_stats.sh $city ; done
+   
+#mkdir -p $DATA/stats/
+#for file in ${VEC}/air**.csv; do
+    
+#echo `basename $file`"."$val | awk   -F "." '{ print $1","$2","$3}'
+#    done > $DATA/stats/air_stats.txt
 
