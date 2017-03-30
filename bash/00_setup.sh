@@ -29,8 +29,6 @@ export TMP=${DIR}/data/tmp/      # used to download and unzip files.
 
 echo "Exporting variables done."
 
-#################################################################
-# Directory Flag
 if [ "$1" = "-dir" ]; then
 
 mkdir -p $DATA
@@ -51,25 +49,37 @@ echo ---------------------------------------------------------
 exit 0
 
 
-#################################################################
-# Data Flag
-
+#######################################################################
+#
+# DOWNLOAD 
+#
+echo "Would you like to continue to DOWNLOAD the data?"
+read go
+if [ "$go" = "y" ]; then
+    1="-data";
+    else
+    exit 0
+#######################################################################
 elif [ "$1" = "-data" ]; then
 
 echo ------------------------------------------------------------------------------
-echo "Running download script. This will take a while. Why don't you grab a coffee at the Agora in Singapore?"
+echo "Running download script. This will take a while. Why don't you grab a coffee in the Agora?"
 echo ------------------------------------------------------------------------------
 bash 02_download_data.sh
 echo
 echo "Download compete!"
 
-echo "Would you like to build the GRASS databse now?
-run source/bash/00_setup.sh -grass"
-exit 0
-
-#################################################################
-# Grass Flag
-
+#######################################################################
+#
+# BUILD 
+#
+echo "Would you like to continue to BUILD the database?"
+read go
+if [ "$go" = "y" ]; then
+    1="-build";
+    else
+    exit 0
+#######################################################################
 elif [ "$1" = "-build" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
@@ -100,12 +110,23 @@ export GRASS_BATCH_JOB="$SH/03_build_grass.sh"
 
 #Blow up previous databse without asking.
 rm -rf $GRASSDB/urban
-
 GISDBASE=$GRASSDB/urban
-
 grass -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
-
 unset GRASS_BATCH_JOB
+
+
+
+#######################################################################
+#
+# FORM 
+#
+echo "Would you like to continue to calculate FORM stats?"
+read go
+if [ "$go" = "y" ]; then
+    1="-form";
+    else
+    exit 0
+#######################################################################
 
 elif [ "$1" = "-form" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
@@ -119,22 +140,24 @@ echo "analyzing urban form"
 echo -------------------------
 # Reading in patch analysis script from bin.
 
-
 export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
 GISDBASE=$GRASSDB/urban
 grass -text -c $GRASSDB/urban/PERMANENT/
 unset GRASS_BATCH_JOB
 
-echo "Would you like to continue to calculate air stats?"
+
+
+#######################################################################
+#
+# AIR 
+#
+echo "Would you like to continue to calculate AIR stats?"
 read go
 if [ "$go" = "y" ]; then
     1="-air";
     else
     exit 0
-fi
-
-
-
+#######################################################################
 elif [ "$1" = "-air" ]; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
