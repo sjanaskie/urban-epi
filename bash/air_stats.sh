@@ -14,7 +14,7 @@
 
 LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
-BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5+2),"s="int($11-2), "e="int($9+2), "w="int($3-2)) }' )
+BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="$5+2,"s="$11-2, "e="$9+2, "w="$3-2) }' )
 
 echo "
 #################################
@@ -24,7 +24,7 @@ with bounds         $BOUNDS
 "
 
 # set mapping region
-g.mapset ${NAME}
+g.mapset -c ${NAME}
 g.region vector=${NAME}
 
 # NOTE: v.external (as used in previous script) does not bring in attributes.
