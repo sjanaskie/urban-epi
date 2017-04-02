@@ -129,12 +129,11 @@ echo ---------------------------
 echo "analyzing urban form"
 echo -------------------------
 # Reading in patch analysis script from bin.
-
+rm -rf ~/.grass7/r.li/output/*
 export GRASS_BATCH_JOB="$SH/04_urban_form_analysis.sh"
 GISDBASE=$GRASSDB/urban
 grass -text -c $GRASSDB/urban/PERMANENT/
 unset GRASS_BATCH_JOB
-
 
 
 #######################################################################
@@ -158,8 +157,10 @@ echo -------------------------
 # Reading in patch analysis script from bin.
 export GRASS_BATCH_JOB="$SH/05_air_pm25.sh"
 GISDBASE=$GRASSDB/urban
-grass -text -c $GRASSDB/urban/PERMANENT/
+grass -text -c $GRASSDB/urban/PERMANENT
 unset GRASS_BATCH_JOB
+
+
 
 #######################################################################
 #
@@ -180,9 +181,10 @@ echo ---------------------------
 echo "analyzing transportation"
 echo -------------------------
 # Reading in patch analysis script from bin.
+rm -rf $GRASSDB/transportation
 export GRASS_BATCH_JOB="$SH/06_transport.sh"
-GISDBASE=$GRASSDB/urban
-grass -text -c $GRASSDB/urban/PERMANENT/
+GISDBASE=$GRASSDB/transportation
+grass -text  $GRASSDB/urban/PERMANENT
 unset GRASS_BATCH_JOB
 
 fi

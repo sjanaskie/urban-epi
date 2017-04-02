@@ -14,33 +14,39 @@
 #############################################################################
 
 
+export DIR=$(echo $PWD)
+export DATA=${DIR}/data/
+export IND=${DIR}/indicators
+export SH=${DIR}/source/bash/
+export GRASSDB=${DIR}/grassdb/
+export RAS=${DIR}/data/raster/    # all and only raster data goes here
+export VEC=${DIR}/data/vector/  # all and only vector data goes here.
+export TMP=${DIR}/data/tmp/      # used to download and unzip files.
+
+
 # export GRASSDB=$DIR/grassdb
 LOCATION_NAME=urban
-echo In grass: ${NAME}
-BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="int($5),"s="int($11), "e="int($9), "w="int($3)) }' )
+# Uncomment to restrict bounds to network extent.
+#BOUNDS=$(ogrinfo -al  $net  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="$5+1,"s="$11-1, "e="$9+1, "w="$3-1) }' )
 
 
 echo "
-#################################
-Working on city:    $NAME      
-With extent:        $BOUNDS
-#################################
+-------------------------------------------
+Working on city:    $NAME    
+-------------------------------------------
 "
-exit 0
 
-# open a mapset and set the region.
-g.mapset -c  dbase=$GRASSDB location=transportation   mapset=$NAME 
-g.region  $BOUNDS 
-g.gisenv
+g.mapset mapset=$NAME --quiet
+g.region vector=$NAME
 
-# read in the vector and raster layers
 echo "Reading in data."
+v.in.ogr -t input=$net output=streets        type=point --overwrite
+v.in.ogr -t input=$int output=intersections  type=line  --overwrite
 
-v.in.ogr input=${VEC}city_networks/${NAME}/edges    layer=edges     output=roads  --o --q 
-v.in.ogr input=${VEC}city_networks/${NAME}/nodes     layer=nodes     output=intersections  --o --q 
-
-
-v.vect.stats -a points=nodes areas=${NAME}@${NAME} count_column=intersections
-
-
+echo "calculate stats"
+v.vect.stats  points=intersections@${NAME}         areas=${NAME}@${NAME}              count_column=int
+mkdir -p $DATA/stats/transportation/
+v.report      map=${NAME}@${NAME}       option=area                unit=kilometers > $DATA/stats/transportation/${NAME}.txt
+v.kernel      input=intersections@${NAME} output=int_density     radius=0.001           --overwrite
+v.rast.stats -c  map=${NAME}                raster=int_density         column_prefix=intden  method=average
 
