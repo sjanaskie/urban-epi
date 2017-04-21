@@ -48,5 +48,5 @@ v.vect.stats  points=intersections@${NAME}         areas=${NAME}@${NAME}        
 mkdir -p $DATA/stats/transportation/
 v.report      map=${NAME}@${NAME}       option=area                unit=kilometers > $DATA/stats/transportation/${NAME}.txt
 v.kernel      input=intersections@${NAME} output=int_density     radius=0.001           --overwrite
-v.rast.stats -c  map=${NAME}                raster=int_density         column_prefix=intden  method=average
+v.rast.stats -c  map=${NAME}                raster=int_density         column_prefix=id  method=average
 

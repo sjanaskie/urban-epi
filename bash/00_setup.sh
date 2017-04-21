@@ -187,6 +187,32 @@ GISDBASE=$GRASSDB/transportation
 grass -text  $GRASSDB/urban/PERMANENT
 unset GRASS_BATCH_JOB
 
-fi
 
+
+#######################################################################
+#
+# AIR 
+#
+echo "Would you like to continue to calculate GREENSPACE stats?"
+read gr
+
+#######################################################################
+elif [ "$1" = "-green" ] || [ "$gr" = "y" ]; then
+    if [ ! "$DIR" = "$PWD" ]; then
+        echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
+        read -p "Press enter to continue."
+        echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+        read DIR
+    fi
+echo ---------------------------
+echo "analyzing greenspace"
+echo -------------------------
+# Reading in patch analysis script from bin.
+rm -rf $GRASSDB/transportation
+export GRASS_BATCH_JOB="$SH/07_greenspace.sh"
+GISDBASE=$GRASSDB/transportation
+grass -text  $GRASSDB/urban/PERMANENT
+unset GRASS_BATCH_JOB
+
+fi
 
