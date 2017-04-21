@@ -92,7 +92,7 @@ echo -------------------------
 grass -c -c -e $RAS/population/*.tif population
 
 
-mkdir -p $VEC/final_cities/ && cp $DIR/source/seed_data/* $VEC/final_cities/
+mkdir -p $VEC/city_boundaries/ && cp $DIR/source/seed_data/* $VEC/city_boundaries/
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
