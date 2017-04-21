@@ -1,0 +1,16 @@
+places = ['Ho Chi Minh City, Vietnam',
+               'Beijing, China', 
+               'Jakarta, Indonesia',
+               'London, UK',
+               'Los Angeles, California, USA',
+               'Manila, Philippines',
+               'Mexico City, Mexico',
+               'New Delhi, India',
+               'Sao Paulo, Brazil',
+               'New York, New York, USA',
+               'Seoul',
+               'Singapore',
+               'Tokyo, Japan',
+               'Nairobi, Kenya',
+               'Bangalore, India'
+              ]
