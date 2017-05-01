@@ -30,6 +30,7 @@ g.region vector=${NAME}
 # NOTE: v.external (as used in previous script) does not bring in attributes.
 v.in.ogr ${VEC}/city_green/${NAME}_treecover.shp  snap=10e-7  --overwrite
 v.in.ogr ${VEC}/city_green/${NAME}_parks.shp  snap=10e-7  --overwrite
+v.in.osm
 v.db.join map=${NAME} column=cat other_table=${NAME}_parks other_column=cat --overwrite
 v.db.join map=${NAME} column=cat other_table=${NAME}_treecover other_column=cat --overwrite
 

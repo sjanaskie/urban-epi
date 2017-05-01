@@ -9,10 +9,12 @@
 # 
 #############################################################################
 
+g.extension extension=v.in.osm
 
-#Land Cover
+#Land Coverhttp://wiki.openstreetmap.org/wiki/OSM_file_formats
 
-######################################################################
+########################cd ..
+##############################################
 #r.in.gdal for all global rasters to PERMANENT mapset. 
 #r.in.gdal     input=raw/gpw-v4-population-density-adjusted-to-2015-unwpp-country-totals_2015.tif   output=pop_density_2015
 #r.in.gdal     input=raw/Hansen_GFC2015_gain_00N_080W.tif   output=tree_gain

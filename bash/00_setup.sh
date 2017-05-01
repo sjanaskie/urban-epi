@@ -112,7 +112,9 @@ unset GRASS_BATCH_JOB
 
 #######################################################################
 #
-# FORM 
+# FORM
+
+
 #
 echo "Would you like to continue to calculate FORM stats?"
 read fm
