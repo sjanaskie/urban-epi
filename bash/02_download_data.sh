@@ -2,20 +2,20 @@
 
 # This bash script downloads all data for the Urban EPI from the source, as well as setting up the proper directory structure.
 export DIR=~/projects/urban_epi
-export SH=$DIR/source/bash    # 3
-export GRASSDB=$DIR/grassdb   # 4
-export RAS=$DIR/data/raster    # 5 all and only raster data goes here
-export VEC=$DIR/data/vector    # 6 all and only vector data goes here.
-export TMP=$DIR/data/tmp 
+export SH=$DIR/source/bash    
+export GRASSDB=$DIR/grassdb   
+export RAS=$DIR/data/raster    # all and only raster data goes here
+export VEC=$DIR/data/vector    # all and only vector data goes here.
+export TMP=$DIR/data/tmp       # TODO: is this needed?
 
 
-rm -rf $TMP && mkdir -p $TMP                                                # Make a TMP folder to store all downloads
+rm -rf $TMP && mkdir -p $TMP  # Make a TMP folder to store all downloads
 
 # Land cover data from: ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01
 # MCD12 is the code for land cover data from NASA.z
 cd $TMP && wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/*   # Download files into TMP (working dir)
 mkdir $RAS/glcf/ && mv $TMP/*/*/*/*/*/*/*/*.tif.gz  $RAS/glcf  # MOVE files from TMP to RAW/glcf 
-cd $RAS/glcf && find . -name '*.gz' -exec gunzip '{}' \;                # Unzip them from .gz format.
+cd $RAS/glcf && find . -name '*.gz' -exec gunzip '{}' \;       # Unzip them from .gz format.
 cd $DIR 
 
 
@@ -34,20 +34,19 @@ python source/python/get_city_shapes.py
 
 
 #----------------------------------
-rm -rf ${VEC}/greenspaces/*
-mkdir -p ${VEC}/greenspaces/
-for file in ${VEC}/city_boundaries/*.shp; do
-export NAME=$(echo `basename $file` | awk -F '[._]' '{ print $1 }')
-export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5+.1","$3-.1","$11-.1","$9+.1) }' )
-
-# helpful: http://blog-en.openalfa.com/how-to-query-openstreetmap-using-the-overpass-api
-# (south,west,north,east)
-# uery part for: “amenity=post_box” s e n w
+rm -rf ${VEC}/greenspaces/* # remove contents of greenspaces directory
+mkdir -p ${VEC}/greenspaces/ # make directory (-p flag means "if not exists")
+for file in ${VEC}/city_boundaries/*.shp; do # loop through shapefiles in city_boundaries
+export NAME=$(echo `basename $file` | awk -F '[._]' '{ print $1 }') # make the simple name based on filenames
+export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5+.1","$3-.1","$11-.1","$9+.1) }' ) # write the bounding boxes
+ 
 echo -------------------------------------------------------
 echo getting osm greenspaces for $NAME
 echo with bbox: $bbox
 echo -------------------------------------------------------
-
+# Read greenspaces matching the following key:value pairs.
+# helpful documentation: http://blog-en.openalfa.com/how-to-query-openstreetmap-using-the-overpass-api
+# NOTE: bounding box is in following order (south,west,north,east)
 echo "[out:xml][timeout:900][maxsize:1073741824];((
     rel["leisure"="park"](${bbox});
     way["leisure"="park"](${bbox});
@@ -77,9 +76,13 @@ echo "[out:xml][timeout:900][maxsize:1073741824];((
     way["natural"="heath"](${bbox});
     rel["boundary"="national_park"](${bbox});
     way["boundary"="national_park"](${bbox}););
-  >;); out body;" >${VEC}/greenspaces/${NAME}_query.osm
+  >;); out body;" >${VEC}/greenspaces/${NAME}_query.osm # save query to file for debugging/ troubleshooting/ record-keeping
 wget -O  ${VEC}/greenspaces/${NAME}.osm --post-file=${VEC}/greenspaces/${NAME}_query.osm "http://overpass-api.de/api/interpreter";
+
 # If you do not have nodejs installed, this StackOverflow post helps you.
 # http://stackoverflow.com/questions/30281057/node-forever-usr-bin-env-node-no-such-file-or-directory
-osmtogeojson ${VEC}/greenspaces/${NAME}.osm > ${NAME}.geojson
+
+# OSM files are not simple to coerce into a usable format for GRASS or otherwise.
+# This NodeJS library (osmtogepjson) is clutch for this and may be used elsewhere.
+osmtogeojson ${VEC}/greenspaces/${NAME}.osm > ${NAME}.geojson # Magically converts osm files to GeoJSON.
 done
