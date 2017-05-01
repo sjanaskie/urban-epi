@@ -1,14 +1,16 @@
 Urban Environmental Assessment Tool
 ==================================
 
-This is a research tool for global urban environmental assessment.
+This is a research tool for global urban environmental assessment. The program takes as an input a directory (file folder) of shapefiles with income and population data. Based on these shapefiles, the program will produce estimates for air quality, transportation, urban form, and green space. To replicate this analysis for a city you have in mind, begin by cloning the repo with `git clone http://github.com/ryanthomas/urban_epi.git` and overwrite the contents of the `city_boundary` folder with the shapefile for your city. Then follow the instructions below.
 
 ## Requirements
 All the tools used in this analysis are open source, including the data, which are freely available on the internet.
 - Bash environment
 - GDAL/OGR
 - GRASS 7.0 or GRASS 7.2
++ Extensions are loaded by the program: r.li, v.in.osm 
 - AWK or GAWK
+- NodeJS; osmtogeojson
 - Internet connection (downloads take a long time [>1 hour] on slow internet)
 
 ## Setup
@@ -30,17 +32,26 @@ It is necessary that these be run one at a time in this order. </br>
 // Future developments may allow them to be run together with an `-all` flag.</br>
 
 ## Details
-### `source/bash/setup.sh -dir`</br>
+### `source/bash/00_setup.sh -dir`</br>
 This will prompt you to enter the <i>absolute</i> path to your parent directory (chosen above). Use the following steps to get the absolute path to your parent directory. You will need to do this outside the script's dialogue (i.e. before typing the above script). You can also exit once you start without breaking anything.</br> 
 - Enter the directory from a bash terminal. If you haven't moved, do nothing - you're already there. </br> 
 - Type `echo $PWD` in your bash terminal, and</br>
 - Copy the output.
 
-### `source/bash/setup.sh -data` </br>
+### `source/bash/00_setup.sh -data` </br>
 This takes exceedingly long, since there are several global rasters involed. This is the main reason for splitting the process into multiple parts. Future iterations of this project may involve targeted downloading of only necessary files. 
 
-### `source/bash/setup.sh -build` </br>
+### `source/bash/00_setup.sh -build` </br>
 Reads in data to PERMANENT mapset.
 
+### `source/bash/00_setup.sh -air` </br>
+Calculates statistics for air quality.
 
+### `source/bash/00_setup.sh -form` </br>
+Calculates statistics for urban form.
 
+### `source/bash/00_setup.sh -trans` </br>
+Calculates statistics for transportation.
+
+### `source/bash/00_setup.sh -green` </br>
+Coming soon...
