@@ -38,7 +38,7 @@ rm -rf ${VEC}/greenspaces/* # remove contents of greenspaces directory
 mkdir -p ${VEC}/greenspaces/ # make directory (-p flag means "if not exists")
 for file in ${VEC}/city_boundaries/*.shp; do # loop through shapefiles in city_boundaries
 export NAME=$(echo `basename $file` | awk -F '[._]' '{ print $1 }') # make the simple name based on filenames
-export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5+.1","$3-.1","$11-.1","$9+.1) }' ) # write the bounding boxes
+export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5+.1","$3+.1","$11-.1","$9-.1) }' ) # write the bounding boxes
  
 echo -------------------------------------------------------
 echo getting osm greenspaces for $NAME
@@ -47,6 +47,7 @@ echo -------------------------------------------------------
 # Read greenspaces matching the following key:value pairs.
 # helpful documentation: http://blog-en.openalfa.com/how-to-query-openstreetmap-using-the-overpass-api
 # NOTE: bounding box is in following order (south,west,north,east)
+# TODO: add nodes to the API query.
 echo "[out:xml][timeout:900][maxsize:1073741824];((
     rel["leisure"="park"](${bbox});
     way["leisure"="park"](${bbox});
@@ -76,7 +77,7 @@ echo "[out:xml][timeout:900][maxsize:1073741824];((
     way["natural"="heath"](${bbox});
     rel["boundary"="national_park"](${bbox});
     way["boundary"="national_park"](${bbox}););
-  >;); out body;" >${VEC}/greenspaces/${NAME}_query.osm # save query to file for debugging/ troubleshooting/ record-keeping
+  >;); out body; >; out;" >${VEC}/greenspaces/${NAME}_query.osm # save query to file for debugging/ troubleshooting/ record-keeping
 wget -O  ${VEC}/greenspaces/${NAME}.osm --post-file=${VEC}/greenspaces/${NAME}_query.osm "http://overpass-api.de/api/interpreter";
 
 # If you do not have nodejs installed, this StackOverflow post helps you.
@@ -84,5 +85,15 @@ wget -O  ${VEC}/greenspaces/${NAME}.osm --post-file=${VEC}/greenspaces/${NAME}_q
 
 # OSM files are not simple to coerce into a usable format for GRASS or otherwise.
 # This NodeJS library (osmtogepjson) is clutch for this and may be used elsewhere.
-osmtogeojson ${VEC}/greenspaces/${NAME}.osm > ${NAME}.geojson # Magically converts osm files to GeoJSON.
+osmtogeojson -m -ndjson ${VEC}/greenspaces/${NAME}.osm > ${VEC}/greenspaces/${NAME}.geojson # Magically converts osm files to GeoJSON.
+
+# convert the vector file old.shp to a raster file new.tif using a pixel size of XRES/YRES
+gdal_rasterize -tr .00001 .00001 -burn 255 -ot Byte -co COMPRESS=DEFLATE ${VEC}/greenspaces/${NAME}.geojson ${VEC}/greenspaces/${NAME}.tif
+# convert the raster file new.tif to a vector file new.shp, using the same raster as a -mask speeds up the processing
+gdal_polygonize.py -f 'ESRI Shapefile' -mask ${VEC}/greenspaces/${NAME}.tif ${VEC}/greenspaces/${NAME}.tif ${VEC}/greenspaces/${NAME}.shp
+# removes the DN attribute created by gdal_polygonize.py
+#ogrinfo ${NAME}.shp -sql "ALTER TABLE ${NAME} DROP COLUMN DN"
+rm -f ${NAME}.tif
+
+#ogr2ogr -f GeoJSON ${VEC}/greenspaces/${NAME}_dissolved.geojson ${VEC}/greenspaces/${NAME}.geojson -dialect sqlite -sql "SELECT ST_Union(geometry) FROM OGRGeoJSON"
 done
