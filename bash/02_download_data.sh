@@ -20,9 +20,13 @@ cd $DIR
 
 
 # Protected Planet dot Net files used for biodiversity.
-cd $TMP && wget http://wcmc.io/wdpa_current_release  # Move into TMP; Download protected planet files
+# NOTE: We are not useing this protected planet shapefile for this. 
+# Could be used in future.
+#cd $TMP && wget http://wcmc.io/wdpa_current_release 
 
-# Get city shape files using python osmnx
+# Get city shape files using python osmnx script.
+# NOTE: The cities are hard-coded right now. 
+# TODO: Adapt this script so it takes a directory of shapefiles.
 python source/python/get_city_shapes.py
 
 
@@ -47,8 +51,9 @@ echo -------------------------------------------------------
 # Read greenspaces matching the following key:value pairs.
 # helpful documentation: http://blog-en.openalfa.com/how-to-query-openstreetmap-using-the-overpass-api
 # NOTE: bounding box is in following order (south,west,north,east)
-# TODO: add nodes to the API query.
-echo "[out:xml][timeout:900][maxsize:1073741824];((
+# TODO: investigate whether we should add nodes to the API query.
+# First, we write the query to a file.
+echo "[out:xml][timeout:900][maxsize:1073741824];(( 
     rel["leisure"="park"](${bbox});
     way["leisure"="park"](${bbox});
     rel["leisure"="garden"](${bbox});
@@ -78,13 +83,14 @@ echo "[out:xml][timeout:900][maxsize:1073741824];((
     rel["boundary"="national_park"](${bbox});
     way["boundary"="national_park"](${bbox}););
   >;); out body; >; out;" >${VEC}/greenspaces/${NAME}_query.osm # save query to file for debugging/ troubleshooting/ record-keeping
+  # then use the --post-file option to call in the query, like so:
 wget -O  ${VEC}/greenspaces/${NAME}.osm --post-file=${VEC}/greenspaces/${NAME}_query.osm "http://overpass-api.de/api/interpreter";
 
-# If you do not have nodejs installed, this StackOverflow post helps you.
-# http://stackoverflow.com/questions/30281057/node-forever-usr-bin-env-node-no-such-file-or-directory
 
 # OSM files are not simple to coerce into a usable format for GRASS or otherwise.
-# This NodeJS library (osmtogepjson) is clutch for this and may be used elsewhere.
+# This NodeJS library (osmtogeojson) is clutch for this and may be #useful elsewhere.
+# If you do not have nodejs installed, this StackOverflow post helps you.
+# http://stackoverflow.com/questions/30281057/node-forever-usr-bin-env-node-no-such-file-or-directory
 osmtogeojson -m -ndjson ${VEC}/greenspaces/${NAME}.osm > ${VEC}/greenspaces/${NAME}.geojson # Magically converts osm files to GeoJSON.
 
 # convert the vector file old.shp to a raster file new.tif using a pixel size of XRES/YRES
@@ -94,6 +100,6 @@ gdal_polygonize.py -f 'ESRI Shapefile' -mask ${VEC}/greenspaces/${NAME}.tif ${VE
 # removes the DN attribute created by gdal_polygonize.py
 #ogrinfo ${NAME}.shp -sql "ALTER TABLE ${NAME} DROP COLUMN DN"
 rm -f ${NAME}.tif
-
+# It *may* be possible to completely flatten the osm 
 #ogr2ogr -f GeoJSON ${VEC}/greenspaces/${NAME}_dissolved.geojson ${VEC}/greenspaces/${NAME}.geojson -dialect sqlite -sql "SELECT ST_Union(geometry) FROM OGRGeoJSON"
 done
