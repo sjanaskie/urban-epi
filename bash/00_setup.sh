@@ -210,11 +210,16 @@ echo ---------------------------
 echo "analyzing greenspace"
 echo -------------------------
 # Reading in patch analysis script from bin.
-rm -rf $GRASSDB/transportation
 export GRASS_BATCH_JOB="$SH/07_greenspace.sh"
-GISDBASE=$GRASSDB/transportation
-grass -text  $GRASSDB/urban/PERMANENT
+
+GISDBASE=$GRASSDB/urban
+for CITY in ${VEC}/city_boundaries/*.shp ; 
+do
+    export CITY
+    grass -text  $GRASSDB/urban/PERMANENT; 
+    done
 unset GRASS_BATCH_JOB
+unset name
 
 fi
 
