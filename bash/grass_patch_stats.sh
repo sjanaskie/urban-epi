@@ -50,7 +50,7 @@ EOF
 r.clump   -d  --overwrite   input=urban@$NAME   output=all_clumps@$NAME --quiet
 
 ###########################################################################
-# Steps to mak the mask
+# Steps to make the mask
 echo "Setting up urban mask."
 # 1. Select the big clumps
 # assign clumps with area > 4km^2 to 1, the rest to 0

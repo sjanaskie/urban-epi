@@ -42,7 +42,7 @@ rm -rf ${VEC}/greenspaces/* # remove contents of greenspaces directory
 mkdir -p ${VEC}/greenspaces/ # make directory (-p flag means "if not exists")
 for file in ${VEC}/city_boundaries/*.shp; do # loop through shapefiles in city_boundaries
 export NAME=$(echo `basename $file` | awk -F '[._]' '{ print $1 }') # make the simple name based on filenames
-export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5+.1","$3+.1","$11-.1","$9-.1) }' ) # write the bounding boxes
+export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5-.1","$3-.1","$11+.1","$9+.1) }' ) # write the bounding boxes
  
 echo -------------------------------------------------------
 echo getting osm greenspaces for $NAME
@@ -99,7 +99,7 @@ gdal_rasterize -tr .00001 .00001 -burn 255 -ot Byte -co COMPRESS=DEFLATE ${VEC}/
 gdal_polygonize.py -f 'ESRI Shapefile' -mask ${VEC}/greenspaces/${NAME}.tif ${VEC}/greenspaces/${NAME}.tif ${VEC}/greenspaces/${NAME}.shp
 # removes the DN attribute created by gdal_polygonize.py
 #ogrinfo ${NAME}.shp -sql "ALTER TABLE ${NAME} DROP COLUMN DN"
-rm -f ${NAME}.tif
+rm -f ${VEC}/${NAME}.tif
 # It *may* be possible to completely flatten the osm 
 #ogr2ogr -f GeoJSON ${VEC}/greenspaces/${NAME}_dissolved.geojson ${VEC}/greenspaces/${NAME}.geojson -dialect sqlite -sql "SELECT ST_Union(geometry) FROM OGRGeoJSON"
 done
