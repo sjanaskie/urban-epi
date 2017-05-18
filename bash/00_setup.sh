@@ -221,5 +221,32 @@ do
 unset GRASS_BATCH_JOB
 unset name
 
+
+
+
+#######################################################################
+elif [ "$1" = "-stats" ] || [ "$gr" = "y" ]; then
+    if [ ! "$DIR" = "$PWD" ]; then
+        echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
+        read -p "Press enter to continue."
+        echo "Please enter the absolute path to the parent directory. You may start from home directory with '~/'. Hint: This is the directory where you ran git clone."
+        read DIR
+    fi
+echo ---------------------------
+echo "exporting stats to: ${DATA}stats/final/[city].csv"
+echo -------------------------
+# Reading in patch analysis script from bin.
+export GRASS_BATCH_JOB="${SH}/export_stats.sh"
+
+GISDBASE=$GRASSDB/urban
+for CITY in ${VEC}/city_boundaries/*.shp ; 
+do
+    export CITY
+    grass -text  $GRASSDB/urban/PERMANENT; 
+    done
+
+    unset GRASS_BATCH_JOB
+unset name
+
 fi
 

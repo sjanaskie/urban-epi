@@ -16,10 +16,6 @@ LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '[._]' '{ print $1 }')
 BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="$5+2,"s="$11-2, "e="$9+2, "w="$3-2) }' )
 
-NAME=london
-BOUNDS="n=53.3799 s=49.6084 e=2.24755 w=-2.41724"
-
-
 
 echo "
 #################################

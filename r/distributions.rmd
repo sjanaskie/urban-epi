@@ -1,0 +1,107 @@
+---
+title: "Multi-City Comparison of Environmental Justice"
+author: "Ryan Thomas"
+date: "April 27, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+This analysis is inspired by the US EPA's 2013 publication, [Ranking Distributions of Environmental Outcomes](https://www.epa.gov/sites/production/files/2014-12/documents/ranking_distributions_of_environmental_outcomes.pdf). The main point of this article is to determine how to rank distributions, rather than ranking absolute values. The ultimate form of this analysis should be to rank cities based on the distribution of each indicators included in the index.
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ineq)
+library(data.table)
+
+```
+
+```{r}
+# set directory
+#setwd("~/projects/urban_epi/data/stats/air/")
+
+# TODO: Once we have all clean CSVs we can do
+# list.files()
+temp <- c("~/projects/urban_epi/data/stats/final/saopaulo.txt",
+          "~/projects/urban_epi/data/stats/final/london.txt",
+          "~/projects/urban_epi/data/stats/final/tokyo.txt",
+          "~/projects/urban_epi/data/stats/final/beijing.txt") 
+# load files
+cities <- lapply(temp, fread)
+# take only unique rows
+cities <- lapply(cities, unique)
+#cities <- lapply(cities, '[', j=c(1:13))
+# add city names
+city <- strsplit(basename(temp), ".txt")
+cities <- mapply(cbind, cities, "city"=city, SIMPLIFY=F)# take only cities with population and income
+# cities <- cities[c(1,3,7,8)]# creates dataframe from list
+# note currently broken as columns have separate names
+pm <- do.call(rbind, lapply(cities, data.frame, stringsAsFactors=FALSE))#area.cities <- do.call(rbind, lapply(cities, "[", c("city","area")))#pop.cities <- do.call(rbind, lapply(cities[c(1,3,7,8)], "[", c("city","area", "Population")))# normalize income
+normalize <- function(x){(x-min(x))/(max(x)-min(x))}
+pm <- pm %>%
+    group_by(city) %>%
+    mutate(Income.std = normalize(Income)) %>%
+    ungroup() %>%
+    as.data.frame()
+
+```
+
+```{r}
+l <- read.table("~/projects/urban_epi/data/vector/air/london.txt", sep="|", header = T, stringsAsFactors = F) 
+
+ pm %>% group_by(city) %>%
+  mutate(tot.inc=(as.numeric(Income)*as.numeric(Population)),
+         p.r=cumsum(Population)/sum(Population),
+         inc.r=cumsum(tot.inc)/sum(tot.inc),
+         
+         # Since these are esxported from GRASS as average, we need to
+         # multiply by the area to get the "total amount" of PM in the 
+         # neighborhood.
+         air15.t=as.numeric(area)*as.numeric(a_average),
+
+         # Cumulative exposure
+         air15.c=cumsum(air15.t),                      
+         air15.r=air15.c/sum(air15.t),      # Relative cumulative exposure
+         air15.g=cumsum(air15.t/sum(Population)),     # Generalized cumulative exposure 
+         # Absolute cumulative exposure
+         air15.a=air15.t/sum(Population)-mean(air15.t)/sum(Population)
+         )  %>%
+  arrange(p.r) %>%
+    ungroup() %>%  as.data.frame() %>% 
+  
+  select(city, nbhd, p.r, inc.r, starts_with("air15")) %>%
+  #arrange(inc.r) %>%
+  gather(indicator,value, c(air15.r, air15.g, air15.a)) %>%
+  ggplot(aes(x=inc.r, y=value)) + 
+  geom_line(aes(colour=city)) +
+  #geom_abline(slope=1, intercept = 0) +
+  #xlab("Cumulative Percent of Poplation") +
+  #ylab("Total Amount of Exposure Accounted For") +
+  facet_grid(indicator ~ ., scales="free_y")
+
+
+```
+
+Here we are plotting each variable against the percentage of population. For income, the y axis would be the percentage of the total income accounted for by the corresponding percentage of population. For air15.r (average PM2.5 level in 2015), this is the percentage of the total exposure experienced by the corresponding percentage of the population. In the chart below, the x-axis represents the percentage of the total income earned (mean neighborhood income * neighborhood population). 
+
+We need to continue developing this because the difference between the back line (45 degree line) means different things depending on whther we're plotting "goods" like income or "bads" like air pollution. Ideally we would have the lines be on the same side of the line to mean the same thing, in terms of being normatively good or bad.
+
+Just to clarify, the green line above (corresponding to income) and the blue line below (corresponding to population) represent the same thing - income distribution. In the two graphs, the variables switched position, so it makes sense that the line is approximately mirrored.
+
+
+TODO: Make the generalized curve where the x-axis is the accumulation per capita;
+Make the Absolute curve where the x-axis is the deviation from the mean.
+
+```{r}
+Atkinson(l$air15.r)
+```
+
+
+
+

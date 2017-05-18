@@ -1,4 +1,4 @@
-#! bin/bash
+#! /bin/bash
 ###########################################################################
 #
 # AUTHOR(S):    Ryan Thomas, Yale University

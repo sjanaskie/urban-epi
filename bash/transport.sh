@@ -46,7 +46,7 @@ v.in.ogr -t input=$int output=intersections  type=line  --overwrite
 echo "calculate stats"
 v.vect.stats  points=intersections@${NAME}         areas=${NAME}@${NAME}              count_column=int
 mkdir -p $DATA/stats/transportation/
-v.report      map=${NAME}@${NAME}       option=area                unit=kilometers > $DATA/stats/transportation/${NAME}.txt
+v.report      map=${NAME}@${NAME}       option=area         separator=","       unit=kilometers > $DATA/stats/transportation/${NAME}.txt
 v.kernel      input=intersections@${NAME} output=int_density     radius=0.001           --overwrite
 v.vect.stats -c  map=${NAME}                raster=int_density         column_prefix=id  method=average
 
