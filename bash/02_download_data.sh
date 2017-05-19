@@ -1,20 +1,29 @@
 #! /bin/bash
 
+###########################################################################
+#
+# AUTHOR(S):    Ryan Thomas, Yale University
+#               
+# PURPOSE:      This script runs commands to download data and set up a 
+#		GRASS70 database used to calculate the Urban Environmental
+#		Assessent Tool.
+# 
+#############################################################################
+
 # This bash script downloads all data for the Urban EPI from the source, as well as setting up the proper directory structure.
-export DIR=~/projects/urban_epi
-export SH=$DIR/source/bash    
-export GRASSDB=$DIR/grassdb   
-export RAS=$DIR/data/raster    # all and only raster data goes here
-export VEC=$DIR/data/vector    # all and only vector data goes here.
-export TMP=$DIR/data/tmp       # TODO: is this needed?
+export DATA=~/project/urban_epi/data   
+export RAS=$DATA/raster    # all and only raster data goes here
+export VEC=$DATA/vector    # all and only vector data goes here.
+export SEED=~/source/seed_data/
 
 
-rm -rf $TMP && mkdir -p $TMP  # Make a TMP folder to store all downloads
+rm -rf $RAS && mkdir -p $RAS  # Make a TMP folder to store all downloads
 
 # Land cover data from: ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01
 # MCD12 is the code for land cover data from NASA.z
-cd $TMP && wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/*   # Download files into TMP (working dir)
-mkdir $RAS/glcf/ && mv $TMP/*/*/*/*/*/*/*/*.tif.gz  $RAS/glcf  # MOVE files from TMP to RAW/glcf 
+cd $RAS && wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5.1/2012.01.01/*   # Download files into TMP (working dir)
+
+#mkdir $RAS/glcf/ && mv $TMP/*/*/*/*/*/*/*/*.tif.gz  $RAS/glcf  # MOVE files from TMP to RAW/glcf 
 cd $RAS/glcf && find . -name '*.gz' -exec gunzip '{}' \;       # Unzip them from .gz format.
 cd $DIR 
 
@@ -28,8 +37,7 @@ cd $DIR
 # NOTE: The cities are hard-coded right now. 
 # TODO: Adapt this script so it takes a directory of shapefiles.
 
-python source/python/get_city_shapes.py
-
+python source/python/get_city_streets.py
 
 
 ## Population density from University of Columbia's SEDAC, CEISN.
@@ -43,7 +51,7 @@ python source/python/get_city_shapes.py
 rm -rf ${VEC}/greenspaces/* # remove contents of greenspaces directory
 mkdir -p ${VEC}/greenspaces/ # make directory (-p flag means "if not exists")
 
-for file in ${VEC}/city_boundaries/*.shp; do # loop through shapefiles in city_boundaries
+for file in $SEED/*.shp; do # loop through shapefiles in city_boundaries
 export NAME=$(echo `basename $file` | awk -F '[._]' '{ print $1 }') # make the simple name based on filenames
 export bbox=$(ogrinfo -al $file  | grep "Extent: " | awk -F "[ (,)]" '{ print ($5-.1","$3-.1","$11+.1","$9+.1) }' ) # write the bounding boxes
  
