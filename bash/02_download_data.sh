@@ -25,10 +25,11 @@ cd $RAS && wget -r ftp://ftp.glcf.umd.edu/glcf/Global_LNDCVR/UMD_TILES/Version_5
 
 #mkdir $RAS/glcf/ && mv $TMP/*/*/*/*/*/*/*/*.tif.gz  $RAS/glcf  # MOVE files from TMP to RAW/glcf 
 cd $RAS/glcf && find . -name '*.gz' -exec gunzip '{}' \;       # Unzip them from .gz format.
-cd $DIR 
 
+# make vrt to create global location
+gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/**.tif  
 
-# Protected Planet dot Net files used for biodiversity.
+# Protected Planet (dot) Net files used for biodiversity.
 # NOTE: We are not useing this protected planet shapefile for this. 
 # Could be used in future.
 #cd $TMP && wget http://wcmc.io/wdpa_current_release 
@@ -48,6 +49,9 @@ python source/python/get_city_streets.py
 
 
 #----------------------------------
+# Get greenspaces from OSM OverpassAPI
+#----------------------------------
+
 rm -rf ${VEC}/greenspaces/* # remove contents of greenspaces directory
 mkdir -p ${VEC}/greenspaces/ # make directory (-p flag means "if not exists")
 
@@ -102,6 +106,10 @@ wget -O  ${VEC}/greenspaces/${NAME}.osm --post-file=${VEC}/greenspaces/${NAME}_q
 # This NodeJS library (osmtogeojson) is clutch for this and may be #useful elsewhere.
 # If you do not have nodejs installed, this StackOverflow post helps you.
 # http://stackoverflow.com/questions/30281057/node-forever-usr-bin-env-node-no-such-file-or-directory
+# Also install osmtogeojson
+# https://github.com/tyrasd/osmtogeojson
+# For cluster, nodejs is installed to the home directory
+# https://gist.githubusercontent.com/isaacs/579814/raw/24f5f02b5cd1812ebb1c41a33a13a0417cccbd69/node-and-npm-in-30-seconds.sh
 osmtogeojson -m -ndjson ${VEC}/greenspaces/${NAME}.osm > ${VEC}/greenspaces/${NAME}.geojson # Magically converts osm files to GeoJSON.
 
 # convert the vector file old.shp to a raster file new.tif using a pixel size of XRES/YRES
@@ -114,3 +122,9 @@ rm -f ${VEC}/${NAME}.tif
 # It *may* be possible to completely flatten the osm file without this.
 #ogr2ogr -f GeoJSON ${VEC}/greenspaces/${NAME}_dissolved.geojson ${VEC}/greenspaces/${NAME}.geojson -dialect sqlite -sql "SELECT ST_Union(geometry) FROM OGRGeoJSON"
 done
+
+
+#----------------------------------
+# Get greenspaces from OSM OverpassAPI
+#----------------------------------
+wget -O $DATA/raster/treecover2010.tar.gz https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/gtc/downloads/treecover2010.tar.gz

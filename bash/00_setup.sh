@@ -25,13 +25,13 @@ echo Skipping to $1.
 
 
 echo Exporting variables done.
-export DATA=${DIR}/data/
+export DATA=~project/data/
 export IND=${DIR}/indicators
 export SH=${DIR}/source/bash/
-export GRASSDB=${DIR}/grassdb/
-export RAS=${DIR}/data/raster    # all and only raster data goes here
-export VEC=${DIR}/data/vector    # all and only vector data goes here.
-export TMP=${DIR}/data/tmp/      # used to download and unzip files.
+export GRASSDB=~scratch60/grassdb/
+export RAS=${DATA}/data/raster    # all and only raster data goes here
+export VEC=${DATA}/data/vector    # all and only vector data goes here.
+export TMP=${DATA}/data/tmp/      # used to download and unzip files.
 
 
 if [ "$1" = "-dir" ]; then
@@ -61,12 +61,12 @@ exit 0
 echo "Would you like to continue to DOWNLOAD the data?"
 read dl
 #######################################################################
-elif [ "$1" = "-data" ] || [ "$dl" = "y" ]; then
+elif { [ "$1" = "-data" ] || [ "$dl" = "y" ] }; then
 
 echo ------------------------------------------------------------------------------
 echo "Running download script. This will take a while. Why don't you grab a coffee in the Agora?"
 echo ------------------------------------------------------------------------------
-bash 02_download_data.sh
+source/bash/02_download_data.sh
 echo
 echo "Download compete!"
 
@@ -77,7 +77,7 @@ echo "Download compete!"
 echo "Would you like to continue to BUILD the database?"
 read bd
 #######################################################################
-elif [ "$1" = "-build" ] || [ "$bd" = "y" ] ; then
+elif { [ "$1" = "-build" ] || [ "$bd" = "y" ] } ; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -92,38 +92,24 @@ echo -------------------------
 
 # reproject GHS data from Molleweide
 # first make a new location with the data as-is
-grass -c -c -e $RAS/population/*.tif population
+#grass -c -c -e $RAS/population/*.tif population
 
-
-mkdir -p $VEC/city_boundaries/ && cp $DIR/source/seed_data/* $VEC/city_boundaries/
+mkdir -p ${VEC}/city_boundaries/ && cp ${DIR}/source/seed_data/* ${VEC}/city_boundaries/
 
 mkdir -p $GRASSDB && cd $GRASSDB
 # make vrt to create global location
-gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/glcf/landuse_cover.vrt    $RAS/glcf/*.tif  
-gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/tree_cover/tree_cover.vrt    $RAS/tree_cover/*.tif  
 
-
-export GRASS_BATCH_JOB="$SH/03_build_grass.sh"
-
-#Blow up previous databse without asking.
-rm -rf $GRASSDB/urban
-GISDBASE=$GRASSDB/urban
 grass -text -c -c $RAS/glcf/landuse_cover.vrt urban $GRASSDB
-unset GRASS_BATCH_JOB
-
 
 
 #######################################################################
 #
 # FORM
-
-
-#
 echo "Would you like to continue to calculate FORM stats?"
 read fm
 #######################################################################
 
-elif [ "$1" = "-form" ] || [ "$fm" = "y" ]; then
+elif { [ "$1" == "-form" ] || [ "$fm" = "y" ] }; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -149,7 +135,7 @@ echo "Would you like to continue to calculate AIR stats?"
 read ar
 
 #######################################################################
-elif [ "$1" = "-air" ] || [ "$ar" = "y" ]; then
+elif { [ "$1" = "-air" ] || [ "$ar" = "y" ] }; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -175,7 +161,7 @@ echo "Would you like to continue to calculate TRANSPORT stats?"
 read tr
 
 #######################################################################
-elif [ "$1" = "-trans" ] || [ "$tr" = "y" ]; then
+elif { [ "$1" = "-trans" ] || [ "$tr" = "y" ] }; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -202,7 +188,7 @@ echo "Would you like to continue to calculate GREENSPACE stats?"
 read gr
 
 #######################################################################
-elif [ "$1" = "-green" ] || [ "$gr" = "y" ]; then
+elif { [ "$1" = "-green" ] || [ "$gr" = "y" ] }; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
@@ -228,7 +214,7 @@ unset name
 
 
 #######################################################################
-elif [ "$1" = "-stats" ] || [ "$gr" = "y" ]; then
+elif { [ "$1" = "-stats" ] || [ "$gr" = "y" ] }; then
     if [ ! "$DIR" = "$PWD" ]; then
         echo "Error: You are not in the home directory, returning to prompt." >> /dev/stderr
         read -p "Press enter to continue."
