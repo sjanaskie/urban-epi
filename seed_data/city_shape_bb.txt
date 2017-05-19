@@ -1,0 +1,36 @@
+BangaloreIndia.shp
+76.4071 11.7985 78.7755 14.1598
+BeijingChina.shp
+115.157 38.7258 117.625 41.0861
+global_cities.shp
+-119.885 -25.1876 155.398 52.8716
+HoChiMinhCityVietnam.shp
+105.174 8.95933 108.21 12.3403
+JakartaIndonesia.shp
+105.646 -7.35623 108.008 -4.99456
+LondonUK.shp
+-1.79812 50.107 1.62192 52.8716
+LosAngelesCaliforniaUSA.shp
+-119.885 32.5233 -116.939 35.5175
+ManilaPhilippines.shp
+119.756 13.3765 122.212 15.8196
+MexicoCityMexico.shp
+-100.324 18.2519 -97.9428 20.6133
+NairobiKenya.shp
+35.6376 -2.46407 37.9969 -0.10244
+NewDelhiIndia.shp
+75.9621 27.4016 78.4455 29.826
+NewYorkNewYorkUSA.shp
+-75.4951 39.2972 -72.4634 42.0963
+QuitoEcuador.shp
+-79.799 -1.54649 -77.2619 1.13345
+SaoPauloBrazil.shp
+-48.0221 -25.1876 -45.1693 -22.1764
+SeoulSouthKorea.shp
+125.538 36.2485 128.411 38.8814
+SingaporeSingapore.shp
+102.672 0.109566 105.032 2.47138
+TokyoJapan.shp
+134.663 19.0344 155.398 37.0787
+vietnam-ho_chi_minh_city.shp
+105.174 8.95933 108.21 12.3403
