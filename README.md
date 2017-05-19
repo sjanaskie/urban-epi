@@ -5,13 +5,23 @@ This is a research tool for global urban environmental assessment. The program t
 
 ## Requirements
 All the tools used in this analysis are open source, including the data, which are freely available on the internet.
-- Bash environment
+- Unix environment
 - GDAL/OGR
-- GRASS 7.0 or GRASS 7.2
+- GRASS 7.0 or GRASS 7.2 linked to the commandline call `grass`
 + Extensions are loaded by the program: r.li, v.in.osm 
 - AWK or GAWK
 - NodeJS; osmtogeojson
+- python packages
++ osmnx
++ matplotlib
++ descartes
++ shapely.geometry
++ geopandas
++ rtree
++ json
++ os, sys, glob
 - Internet connection (downloads take a long time [>1 hour] on slow internet)
+
 
 ## Setup
 Importantly, the repo is intended to be cloned into a parent directory and renamed "source". The name of the directory once it is cloned should be "source".
@@ -27,6 +37,7 @@ The setup script takes one of three arguements:
 | `source/bash/00_setup.sh -build` | To set up the grass database |
 | `source/bash/00_setup.sh -form` | To calculate the urban form statistics |
 | `source/bash/00_setup.sh -air` | To calculat the air indicators |
+| `source/bash/00_setup.sh -trans` | To calculat the transportation indicators |
 
 It is necessary that these be run one at a time in this order. </br>
 // Future developments may allow them to be run together with an `-all` flag.</br>

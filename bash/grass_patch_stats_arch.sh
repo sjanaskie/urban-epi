@@ -17,6 +17,8 @@
 # export GRASSDB=$DIR/grassdb
 LOCATION_NAME=urban
 NAME=$(echo `basename $1` | awk -F '.' '{ print $1 }')
+#NAME=$(basename $1 .shp)
+
 BOUNDS=$(ogrinfo -al  $1  | grep "Extent: " | awk -F "[ (,)]" '{ print ("n="$5+2,"s="$11-2, "e="$9+2, "w="$3-2) }' )
 
 

@@ -10,17 +10,21 @@
 # 
 #############################################################################
 
-
+# Because pwd is relative, this must be run from a specific directory.
 export DIR=$(echo $PWD)
-echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?    y/n"
+echo "You must run this from the 'parent', currently set to $DIR. Do you want to continue?
+(y/n)"
+
 
 read start
 if [ ! "$start" = "y" ]; then
     exit 0
 fi
 
-echo "Skipping to $1"
+echo Skipping to $1.
 
+
+echo Exporting variables done.
 export DATA=${DIR}/data/
 export IND=${DIR}/indicators
 export SH=${DIR}/source/bash/
@@ -29,7 +33,6 @@ export RAS=${DIR}/data/raster    # all and only raster data goes here
 export VEC=${DIR}/data/vector    # all and only vector data goes here.
 export TMP=${DIR}/data/tmp/      # used to download and unzip files.
 
-echo "Exporting variables done."
 
 if [ "$1" = "-dir" ]; then
 
@@ -241,11 +244,11 @@ export GRASS_BATCH_JOB="${SH}/export_stats.sh"
 GISDBASE=$GRASSDB/urban
 for CITY in ${VEC}/city_boundaries/*.shp ; 
 do
-    export CITY
-    grass -text  $GRASSDB/urban/PERMANENT; 
-    done
+export CITY
+grass -text  $GRASSDB/urban/PERMANENT; 
+done
 
-    unset GRASS_BATCH_JOB
+unset GRASS_BATCH_JOB
 unset name
 
 fi
