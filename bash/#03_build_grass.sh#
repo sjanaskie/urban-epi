@@ -9,7 +9,6 @@
 # 
 #############################################################################
 
-source $SH/enter_grass.sh
 
 g.extension extension=v.in.osm
 

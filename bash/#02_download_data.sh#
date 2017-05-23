@@ -40,8 +40,10 @@ gdalbuildvrt -overwrite -a_srs "EPSG:4326"  $RAS/glcf/landuse_cover.vrt    $RAS/
 # NOTE: The cities are hard-coded right now. 
 # TODO: Adapt this script so it takes a directory of shapefiles.
 
+conda env create --file environment.yml
+source activate urban
 python ~/source/python/get_city_streets.py
-
+source deactivate
 
 ## Population density from University of Columbia's SEDAC, CEISN.
 #cd $TMP
