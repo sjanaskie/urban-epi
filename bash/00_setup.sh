@@ -67,7 +67,7 @@ echo -------------------------
 # mkdir -p ${VEC}/city_boundaries/ && cp ${DIR}/source/seed_data/* ${VEC}/city_boundaries/
 
 # make vrt to create global location
-source create_location.sh
+bash create_location.sh
 #grass70 -text -c   urban scratch60/grassdb/
 g.extension extension=v.in.osm
 
